@@ -5,45 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Generador de Banners — Estudio Giraud</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Gotham','Montserrat','Inter',sans-serif; background: #f5f5f3; min-height: 100vh; padding: 2rem; color: #2c2c2c; }
-  .app-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
-  .app-header svg { width: 48px; height: 48px; }
-  .app-title { font-size: 1.1rem; font-weight: 600; color: #3D4F6B; letter-spacing: 0.02em; }
-  .app-subtitle { font-size: 0.8rem; color: #888; letter-spacing: 0.05em; text-transform: uppercase; }
-  .panel { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e8e8e4; }
-  .panel-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #3D4F6B; margin-bottom: 1rem; }
-  .field-row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
-  .field { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 200px; }
-  .field label { font-size: 0.78rem; color: #666; font-weight: 500; }
-  input[type="text"], input[type="date"], input[type="password"] { border: 1px solid #ddd; border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; background: white; color: #2c2c2c; width: 100%; }
-  input:focus { outline: 2px solid #3D4F6B; outline-offset: 1px; border-color: transparent; }
-  .btn { padding: 0.65rem 1.4rem; border-radius: 8px; border: none; font-size: 0.88rem; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; }
-  .btn-primary { background: #3D4F6B; color: white; }
-  .btn-primary:hover { background: #2e3d55; }
-  .btn-primary:disabled { background: #a0aab8; cursor: not-allowed; }
-  .btn-secondary { background: white; color: #3D4F6B; border: 1px solid #3D4F6B; }
-  .btn-secondary:hover { background: #f0f3f8; }
-  .status-bar { display: none; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; }
-  .status-bar.loading { display: flex; background: #eef2f8; color: #3D4F6B; }
-  .status-bar.error { display: flex; background: #fdf0f0; color: #a33; }
-  .spinner { width: 16px; height: 16px; border: 2px solid #3D4F6B; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .preview-area { display: none; flex-direction: column; align-items: center; gap: 1rem; }
-  .preview-area.visible { display: flex; }
-  .banner-actions { display: flex; gap: 0.75rem; align-items: center; }
-  #banner-canvas { border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); max-width: 100%; }
-  .tip { font-size: 0.76rem; color: #888; margin-top: 0.4rem; line-height: 1.5; }
-  .tip a { color: #3D4F6B; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat','Inter',sans-serif; background: #f0efe9; min-height: 100vh; padding: 2rem; color: #2c2c2c; }
+.app-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.app-title { font-size: 1.1rem; font-weight: 700; color: #3D4F6B; }
+.app-subtitle { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+.panel { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e0d8; }
+.panel-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #3D4F6B; margin-bottom: 1rem; }
+.field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.field:last-child { margin-bottom: 0; }
+.field label { font-size: 0.78rem; color: #555; font-weight: 600; }
+input[type="text"], input[type="date"], input[type="password"] { border: 1px solid #d5d3cb; border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; background: white; color: #2c2c2c; width: 100%; }
+input:focus { outline: 2px solid #3D4F6B; outline-offset: 1px; border-color: transparent; }
+.row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+.btn { padding: 0.65rem 1.6rem; border-radius: 8px; border: none; font-size: 0.88rem; font-family: inherit; font-weight: 700; cursor: pointer; letter-spacing: 0.02em; transition: all 0.15s; }
+.btn-primary { background: #3D4F6B; color: white; }
+.btn-primary:hover { background: #2e3d55; }
+.btn-primary:disabled { background: #a0aab8; cursor: not-allowed; }
+.btn-dl { background: #3D4F6B; color: white; font-size: 0.82rem; padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; }
+.btn-dl:hover { background: #2e3d55; }
+.tip { font-size: 0.74rem; color: #888; margin-top: 0.3rem; line-height: 1.5; }
+.tip a { color: #3D4F6B; }
+.status-bar { display: none; align-items: center; gap: 0.7rem; padding: 0.8rem 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; }
+.status-bar.loading { display: flex; background: #eef2f8; color: #3D4F6B; }
+.status-bar.error { display: flex; background: #fdf0f0; color: #a33; }
+.spinner { width: 16px; height: 16px; border: 2px solid #3D4F6B; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.banners-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+.banner-card { background: white; border-radius: 12px; padding: 1rem; border: 1px solid #e2e0d8; }
+.banner-card h3 { font-size: 0.78rem; font-weight: 700; color: #3D4F6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.banner-card canvas { width: 100%; border-radius: 6px; display: block; margin-bottom: 0.75rem; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
 </style>
 </head>
 <body>
 
 <div class="app-header">
-  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="100" cy="100" r="95" fill="#3D4F6B"/>
-    <text x="100" y="128" font-family="Georgia,serif" font-size="110" font-weight="700" fill="white" text-anchor="middle">eg</text>
-  </svg>
+  <img src="https://laureano-design.github.io/giraud-banners/Logo_Estudio_Giraud_01.jpg" style="height:52px;border-radius:4px" onerror="this.style.display='none'" />
   <div>
     <div class="app-title">Estudio Giraud</div>
     <div class="app-subtitle">Generador de Banners · Instagram</div>
@@ -52,30 +49,25 @@
 
 <div class="panel">
   <div class="panel-title">Configuración</div>
-  <div class="field-row" style="margin-bottom:1rem">
-    <div class="field">
-      <label>Google Sheet ID</label>
-      <input type="text" id="sheet-id" value="1zZTi5YPrRPLtZV8Y6-2lPfWXlIEuU_p7jbIkJdUw3Ow" />
-      <div class="tip">La planilla debe estar compartida como "cualquier persona con el link puede ver".</div>
-    </div>
+  <div class="field">
+    <label>Google Sheet ID</label>
+    <input type="text" id="sheet-id" value="1zZTi5YPrRPLtZV8Y6-2lPfWXlIEuU_p7jbIkJdUw3Ow" />
   </div>
-  <div class="field-row">
-    <div class="field">
-      <label>API Key de Anthropic</label>
-      <input type="password" id="api-key" placeholder="sk-ant-..." />
-      <div class="tip">Obtenela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys. Se guarda en tu navegador.</div>
-    </div>
+  <div class="field">
+    <label>API Key de Anthropic</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." />
+    <div class="tip">Obtenela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys</div>
   </div>
 </div>
 
 <div class="panel">
-  <div class="panel-title">Generar Banner</div>
-  <div class="field-row">
-    <div class="field" style="max-width:200px">
+  <div class="panel-title">Generar Banners del Día</div>
+  <div class="row">
+    <div class="field" style="max-width:200px;margin-bottom:0">
       <label>Fecha</label>
       <input type="date" id="fecha" />
     </div>
-    <button class="btn btn-primary" id="btn-generar" onclick="generarBanner()">Generar banner</button>
+    <button class="btn btn-primary" id="btn-generar" onclick="generarTodos()">Generar banners</button>
   </div>
 </div>
 
@@ -84,38 +76,52 @@
   <span id="status-text"></span>
 </div>
 
-<div class="preview-area" id="preview-area">
-  <canvas id="banner-canvas" width="1080" height="1080" style="width:540px;height:540px"></canvas>
-  <div class="banner-actions">
-    <button class="btn btn-primary" onclick="descargarBanner()">⬇ Descargar PNG</button>
-    <button class="btn btn-secondary" onclick="generarBanner()">↺ Regenerar</button>
-  </div>
-</div>
+<div id="resultado"></div>
 
 <script>
-const COLS = {
-  fecha:0, buenosAires:1, caba:2, cordoba:3, corrientes:4, entreRios:5,
-  laRioja:6, mendoza:7, misiones:8, neuquen:9, rioNegro:10, salta:11,
-  sanJuan:12, santaFe:13, santiagoDelEstero:14, tucuman:15,
-  iva:16, ganancias:17, bienesPersonales:18, impuestosInternos:19,
-  debitosCreditos:20, contabilidad:21, generalOtros:22, convenioMultilateral:23
+const SHEET_COLS = {
+  fecha:0,
+  buenosAires:1, caba:2, catamarca:3, chaco:4, chubut:5, cordoba:6,
+  corrientes:7, entreRios:8, formosa:9, jujuy:10, laPampa:11, laRioja:12,
+  mendoza:13, misiones:14, neuquen:15, rioNegro:16, salta:17, sanJuan:18,
+  sanLuis:19, santaCruz:20, santaFe:21, santiagoDelEstero:22, tierraDelFuego:23,
+  tucuman:24,
+  iva:25, ganancias:26, bienesPersonales:27, impuestosInternos:28,
+  debitosCreditos:29, contabilidad:30, generalOtros:31, convenioMultilateral:32,
+  laboral:33
 };
 
-const COL_LABELS = {
-  buenosAires:'Buenos Aires', caba:'CABA', cordoba:'Córdoba',
-  corrientes:'Corrientes', entreRios:'Entre Ríos', laRioja:'La Rioja',
-  mendoza:'Mendoza', misiones:'Misiones', neuquen:'Neuquén',
-  rioNegro:'Río Negro', salta:'Salta', sanJuan:'San Juan',
-  santaFe:'Santa Fe', santiagoDelEstero:'Santiago del Estero',
-  tucuman:'Tucumán', iva:'IVA', ganancias:'Ganancias',
-  bienesPersonales:'Bienes Personales', impuestosInternos:'Imp. Internos',
-  debitosCreditos:'Débitos y Créditos', contabilidad:'Contabilidad',
-  generalOtros:'General / Otros', convenioMultilateral:'Conv. Multilateral'
+const PROV_KEYS = ['buenosAires','caba','catamarca','chaco','chubut','cordoba','corrientes','entreRios','formosa','jujuy','laPampa','laRioja','mendoza','misiones','neuquen','rioNegro','salta','sanJuan','sanLuis','santaCruz','santaFe','santiagoDelEstero','tierraDelFuego','tucuman'];
+const NAC_KEYS = ['iva','ganancias','bienesPersonales','impuestosInternos','debitosCreditos','contabilidad','generalOtros','convenioMultilateral','laboral'];
+
+const LABELS = {
+  buenosAires:'Buenos Aires', caba:'CABA', catamarca:'Catamarca', chaco:'Chaco',
+  chubut:'Chubut', cordoba:'Córdoba', corrientes:'Corrientes', entreRios:'Entre Ríos',
+  formosa:'Formosa', jujuy:'Jujuy', laPampa:'La Pampa', laRioja:'La Rioja',
+  mendoza:'Mendoza', misiones:'Misiones', neuquen:'Neuquén', rioNegro:'Río Negro',
+  salta:'Salta', sanJuan:'San Juan', sanLuis:'San Luis', santaCruz:'Santa Cruz',
+  santaFe:'Santa Fe', santiagoDelEstero:'Santiago del Estero', tierraDelFuego:'Tierra del Fuego',
+  tucuman:'Tucumán',
+  iva:'IVA', ganancias:'Imp. a las Ganancias', bienesPersonales:'Bienes Personales',
+  impuestosInternos:'Impuestos Internos', debitosCreditos:'Imp. Débitos y Créditos',
+  contabilidad:'Normas de Contabilidad', generalOtros:'Otros Temas de Interés',
+  convenioMultilateral:'Convenio Multilateral', laboral:'Laboral'
 };
+
+const NAC_SECTION_TITLE = 'NOVEDADES NACIONALES';
+const PROV_SECTION_TITLE = 'NOVEDADES PROVINCIALES';
+
+// Colors
+const C_DARK = '#3D4F6B';
+const C_MID = '#7A8FA6';
+const C_LIGHT = '#B8C8D8';
+const C_BEIGE = '#B8A99A';
+const C_BG = '#F8F7F4';
+const C_TEXT = '#2c2c2c';
+const C_GRAY = '#555';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date();
-  document.getElementById('fecha').value = today.toISOString().slice(0,10);
+  document.getElementById('fecha').value = new Date().toISOString().slice(0,10);
   const saved = localStorage.getItem('giraud_api_key');
   if (saved) document.getElementById('api-key').value = saved;
 });
@@ -126,26 +132,22 @@ function setStatus(type, msg) {
   document.getElementById('spinner').style.display = type === 'loading' ? 'block' : 'none';
   bar.className = 'status-bar ' + type;
 }
+function hideStatus() { document.getElementById('status').className = 'status-bar'; }
 
-function hideStatus() {
-  document.getElementById('status').className = 'status-bar';
-}
-
-async function fetchSheetData(sheetId) {
+async function fetchSheet(sheetId) {
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=novedades_diarias`;
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error('No se pudo leer la planilla. Verificá que esté compartida públicamente.');
+  if (!resp.ok) throw new Error('No se pudo leer la planilla.');
   const text = await resp.text();
-  return parseGviz(text);
-}
-
-function parseGviz(text) {
   const json = text.replace(/^[^\(]+\(/, '').replace(/\);\s*$/, '');
   const data = JSON.parse(json);
   return data.table.rows.map(row =>
     row.c.map(c => {
       if (!c || c.v === null || c.v === undefined) return '';
-      if (typeof c.v === 'string' && c.v.startsWith('Date(')) return c.v;
+      if (typeof c.v === 'string' && c.v.startsWith('Date(')) {
+        const m = c.v.match(/Date\((\d+),(\d+),(\d+)\)/);
+        if (m) return `${m[1]}-${String(parseInt(m[2])+1).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+      }
       return c.f !== undefined && c.f !== null ? String(c.f) : String(c.v);
     })
   );
@@ -154,13 +156,7 @@ function parseGviz(text) {
 function parseFecha(str) {
   if (!str) return null;
   str = str.trim();
-  const dm = str.match(/Date\((\d+),(\d+),(\d+)\)/);
-  if (dm) {
-    const y = dm[1];
-    const m = String(parseInt(dm[2])+1).padStart(2,'0');
-    const d = String(dm[3]).padStart(2,'0');
-    return `${y}-${m}-${d}`;
-  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
   const parts = str.replace(/"/g,'').split('/');
   if (parts.length === 3) {
     let [d,m,y] = parts;
@@ -170,50 +166,43 @@ function parseFecha(str) {
   return str.slice(0,10);
 }
 
-function findRow(rows, fechaTarget) {
+function findRow(rows, target) {
   for (const row of rows) {
-    if (parseFecha(row[0]) === fechaTarget) return row;
+    if (parseFecha(row[0]) === target) return row;
   }
   return null;
 }
 
-function extractNovedades(row) {
-  const result = { provincias:[], nacionales:[] };
-  const prov = ['buenosAires','caba','cordoba','corrientes','entreRios','laRioja','mendoza','misiones','neuquen','rioNegro','salta','sanJuan','santaFe','santiagoDelEstero','tucuman'];
-  const nac = ['iva','ganancias','bienesPersonales','impuestosInternos','debitosCreditos','contabilidad','generalOtros','convenioMultilateral'];
-  for (const k of prov) {
-    const v = row[COLS[k]];
-    if (v && v.trim()) result.provincias.push({ lugar: COL_LABELS[k], texto: v.trim() });
+function extractData(row) {
+  const provincias = [];
+  const nacionales = [];
+  for (const k of PROV_KEYS) {
+    const v = row[SHEET_COLS[k]];
+    if (v && v.trim()) provincias.push({ key: k, label: LABELS[k], texto: v.trim() });
   }
-  for (const k of nac) {
-    const v = row[COLS[k]];
-    if (v && v.trim()) result.nacionales.push({ area: COL_LABELS[k], texto: v.trim() });
+  for (const k of NAC_KEYS) {
+    const v = row[SHEET_COLS[k]];
+    if (v && v.trim()) nacionales.push({ key: k, label: LABELS[k], texto: v.trim() });
   }
-  return result;
+  return { provincias, nacionales };
 }
 
-async function procesarConClaude(apiKey, novedades, fecha) {
-  const prompt = `Sos el asistente de Estudio Giraud, un estudio de Contadores Públicos argentino. Recibís novedades legislativas y fiscales del día y debés generar el contenido para un banner de Instagram profesional.
+async function procesarConClaude(apiKey, tipo, label, textoCompleto, fecha) {
+  const prompt = `Sos el asistente de Estudio Giraud, estudio de Contadores Públicos argentino. Analizá esta novedad legislativa y generá contenido para un banner de Instagram.
 
+Tipo: ${tipo}
+Área: ${label}
 Fecha: ${fecha}
+Texto completo: ${textoCompleto}
 
-NOVEDADES PROVINCIALES:
-${novedades.provincias.map(p=>`- ${p.lugar}: ${p.texto}`).join('\n')||'(ninguna)'}
-
-NOVEDADES NACIONALES:
-${novedades.nacionales.map(n=>`- ${n.area}: ${n.texto}`).join('\n')||'(ninguna)'}
-
-Generá el contenido para el banner. Respondé SOLO en JSON, sin backticks ni texto extra:
+Respondé SOLO en JSON sin backticks:
 {
-  "titulo": "título llamativo y breve (máx 6 palabras, en mayúsculas)",
-  "subtitulo": "frase de contexto (máx 10 palabras)",
-  "items": [
-    { "categoria": "etiqueta corta", "texto": "descripción concisa de la novedad (máx 18 palabras)" }
-  ],
-  "cta": "frase de cierre profesional (máx 8 palabras)"
-}
-
-Incluí entre 3 y 6 items, priorizando las novedades más relevantes para empresas y personas físicas. Usá lenguaje claro, no técnico.`;
+  "titulo": "título impactante en mayúsculas (máx 6 palabras)",
+  "subtitulo": "frase de contexto clara (máx 12 palabras)",
+  "resumen": "resumen ejecutivo del tema en 1-2 oraciones claras para empresarios (máx 40 palabras)",
+  "detalle": "desarrollo más completo del tema, qué cambia, a quién afecta, vigencia si la hay (máx 80 palabras, lenguaje claro no técnico)",
+  "cta": "llamada a la acción profesional (máx 8 palabras)"
+}`;
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -225,16 +214,15 @@ Incluí entre 3 y 6 items, priorizando las novedades más relevantes para empres
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
+      max_tokens: 800,
       messages: [{ role:'user', content: prompt }]
     })
   });
 
   if (!resp.ok) {
     const err = await resp.json();
-    throw new Error('Error API Anthropic: ' + (err.error?.message || resp.status));
+    throw new Error('Error API: ' + (err.error?.message || resp.status));
   }
-
   const data = await resp.json();
   const text = data.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim();
   return JSON.parse(text);
@@ -267,135 +255,237 @@ function wrapText(ctx, text, x, y, maxWidth, lineH, color, font) {
   return lines.length;
 }
 
-function drawBanner(contenido, fechaStr) {
-  const canvas = document.getElementById('banner-canvas');
+function drawBanner(canvas, contenido, label, tipo, fechaStr, logoImg) {
   const ctx = canvas.getContext('2d');
-  const W = 1080, H = 1080;
+  const W = 1080, H = 1350; // portrait for more content
+  canvas.width = W; canvas.height = H;
 
-  ctx.clearRect(0,0,W,H);
-
-  ctx.fillStyle = '#F8F7F4';
+  // BG
+  ctx.fillStyle = C_BG;
   ctx.fillRect(0,0,W,H);
 
-  ctx.fillStyle = '#3D4F6B';
-  ctx.fillRect(0,0,W,190);
+  // Header dark bar
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0,0,W,160);
 
-  ctx.fillStyle = '#3D4F6B';
-  ctx.fillRect(0, H-110, W, 110);
+  // Footer dark bar
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0, H-100, W, 100);
 
-  ctx.fillStyle = 'white';
-  ctx.font = 'bold 32px "Montserrat","Inter",sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('ESTUDIO GIRAUD', 80, 88);
-  ctx.font = '17px "Montserrat","Inter",sans-serif';
-  ctx.fillStyle = '#8FA8C4';
-  ctx.fillText('CONTADORES PÚBLICOS', 80, 120);
-  ctx.font = '15px "Montserrat","Inter",sans-serif';
-  ctx.fillStyle = '#8FA8C4';
-  ctx.textAlign = 'right';
-  ctx.fillText(formatFecha(fechaStr).toUpperCase(), W-80, 104);
-
-  ctx.strokeStyle = '#B8A99A';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(60, 190); ctx.lineTo(W-60, 190); ctx.stroke();
-
-  ctx.textAlign = 'left';
-  const tituloFont = 'bold 58px "Georgia","Times New Roman",serif';
-  const tLines = getLines(ctx, contenido.titulo.toUpperCase(), W-160, tituloFont);
-  wrapText(ctx, contenido.titulo.toUpperCase(), 80, 268, W-160, 70, '#3D4F6B', tituloFont);
-  const tBottom = 268 + tLines.length * 70;
-
-  ctx.font = '24px "Montserrat","Inter",sans-serif';
-  ctx.fillStyle = '#7A8FA6';
-  ctx.fillText(contenido.subtitulo, 80, tBottom + 28);
-
-  ctx.strokeStyle = '#D5C9BE';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(80, tBottom+52); ctx.lineTo(W-80, tBottom+52); ctx.stroke();
-
-  const itemsStart = tBottom + 80;
-  const itemsEnd = H - 110 - 30;
-  const itemCount = contenido.items.length;
-  const slotH = (itemsEnd - itemsStart) / itemCount;
-
-  for (let i = 0; i < itemCount; i++) {
-    const item = contenido.items[i];
-    const y = itemsStart + i * slotH;
-
-    ctx.fillStyle = '#3D4F6B';
-    ctx.beginPath();
-    ctx.roundRect(80, y+2, 5, 40, 2);
-    ctx.fill();
-
-    ctx.font = 'bold 14px "Montserrat","Inter",sans-serif';
-    ctx.fillStyle = '#3D4F6B';
-    ctx.fillText(item.categoria.toUpperCase(), 104, y + 18);
-
-    ctx.font = '20px "Montserrat","Inter",sans-serif';
-    ctx.fillStyle = '#3a3a3a';
-    wrapText(ctx, item.texto, 104, y + 38, W-184, 25, '#3a3a3a', '20px "Montserrat","Inter",sans-serif');
+  // Logo in header
+  if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+    const logoH = 80;
+    const logoW = logoImg.naturalWidth * (logoH / logoImg.naturalHeight);
+    ctx.drawImage(logoImg, 60, 40, logoW, logoH);
+  } else {
+    // fallback text logo
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 28px Georgia,serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('ESTUDIO GIRAUD', 70, 88);
+    ctx.font = '16px "Montserrat","Inter",sans-serif';
+    ctx.fillStyle = C_LIGHT;
+    ctx.fillText('CONTADORES PÚBLICOS', 70, 115);
   }
 
+  // Date top right
+  ctx.fillStyle = C_LIGHT;
+  ctx.font = '15px "Montserrat","Inter",sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(formatFecha(fechaStr).toUpperCase(), W-70, 95);
+
+  // Section tag
+  ctx.textAlign = 'right';
+  ctx.fillStyle = C_BEIGE;
+  ctx.font = '13px "Montserrat","Inter",sans-serif';
+  ctx.fillText(tipo === 'provincial' ? PROV_SECTION_TITLE : NAC_SECTION_TITLE, W-70, 120);
+
+  // Separator
+  ctx.strokeStyle = C_BEIGE;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(60, 160); ctx.lineTo(W-60, 160); ctx.stroke();
+
+  // Province/area name BIG
+  ctx.textAlign = 'left';
+  const labelFont = 'bold 72px Georgia,"Times New Roman",serif';
+  const labelLines = getLines(ctx, label.toUpperCase(), W-120, labelFont);
+  wrapText(ctx, label.toUpperCase(), 60, 250, W-120, 82, C_DARK, labelFont);
+  const labelBottom = 250 + labelLines.length * 82;
+
+  // Subtitle
+  ctx.font = '24px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = C_MID;
+  const subLines = wrapText(ctx, contenido.subtitulo, 60, labelBottom + 20, W-120, 32, C_MID, '24px "Montserrat","Inter",sans-serif');
+  const subBottom = labelBottom + 20 + subLines * 32;
+
+  // Divider
+  ctx.strokeStyle = '#D5C9BE';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60, subBottom+20); ctx.lineTo(W-60, subBottom+20); ctx.stroke();
+
+  // RESUMEN box
+  let y = subBottom + 50;
+  ctx.fillStyle = '#EEF2F8';
+  const resLines = getLines(ctx, contenido.resumen, W-180, '22px "Montserrat","Inter",sans-serif');
+  const resBoxH = resLines.length * 30 + 40;
+  ctx.beginPath();
+  ctx.roundRect(60, y, W-120, resBoxH, 8);
+  ctx.fill();
+  ctx.fillStyle = C_DARK;
+  ctx.font = 'bold 13px "Montserrat","Inter",sans-serif';
+  ctx.fillText('RESUMEN', 80, y+22);
+  wrapText(ctx, contenido.resumen, 80, y+44, W-160, 30, C_TEXT, '22px "Montserrat","Inter",sans-serif');
+  y += resBoxH + 30;
+
+  // DETALLE section
+  ctx.fillStyle = C_DARK;
+  ctx.beginPath();
+  ctx.roundRect(60, y, 5, 20, 2);
+  ctx.fill();
+  ctx.font = 'bold 14px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = C_DARK;
+  ctx.fillText('DESARROLLO', 82, y+15);
+  y += 35;
+
+  const detLines = wrapText(ctx, contenido.detalle, 60, y, W-120, 30, C_GRAY, '21px "Montserrat","Inter",sans-serif');
+  y += detLines * 30 + 20;
+
+  // Thin line before titulo
+  ctx.strokeStyle = '#D5C9BE';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W-60, y); ctx.stroke();
+  y += 25;
+
+  // BIG TITLE
+  const titFont = 'bold 52px Georgia,"Times New Roman",serif';
+  const titLines = getLines(ctx, contenido.titulo, W-120, titFont);
+  wrapText(ctx, contenido.titulo, 60, y, W-120, 62, C_DARK, titFont);
+
+  // Footer CTA
   ctx.fillStyle = 'white';
   ctx.font = '20px "Montserrat","Inter",sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(contenido.cta, W/2, H-42);
+  ctx.fillText(contenido.cta, W/2, H-38);
   ctx.textAlign = 'left';
 }
 
-async function generarBanner() {
+let logoImg = null;
+
+function preloadLogo() {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { logoImg = img; resolve(); };
+    img.onerror = () => resolve();
+    img.src = 'Logo_Estudio_Giraud_01.jpg';
+  });
+}
+
+async function generarTodos() {
   const sheetId = document.getElementById('sheet-id').value.trim();
   const apiKey = document.getElementById('api-key').value.trim();
   const fecha = document.getElementById('fecha').value;
 
-  if (!sheetId) { setStatus('error','Ingresá el ID de la planilla.'); return; }
-  if (!apiKey) { setStatus('error','Ingresá tu API Key de Anthropic.'); return; }
-  if (!fecha) { setStatus('error','Seleccioná una fecha.'); return; }
-
+  if (!sheetId || !apiKey || !fecha) { setStatus('error','Completá todos los campos.'); return; }
   localStorage.setItem('giraud_api_key', apiKey);
+
   document.getElementById('btn-generar').disabled = true;
-  document.getElementById('preview-area').className = 'preview-area';
+  document.getElementById('resultado').innerHTML = '';
 
   try {
+    setStatus('loading','Cargando logo...');
+    await preloadLogo();
+
     setStatus('loading','Leyendo la planilla...');
-    const rows = await fetchSheetData(sheetId);
-
-    setStatus('loading','Buscando novedades del día...');
+    const rows = await fetchSheet(sheetId);
     const row = findRow(rows, fecha);
-    if (!row) {
-      setStatus('error',`No hay novedades para el ${formatFecha(fecha)}. Verificá que la fecha esté en la planilla.`);
-      return;
+    if (!row) { setStatus('error',`No hay datos para el ${formatFecha(fecha)}.`); return; }
+
+    const { provincias, nacionales } = extractData(row);
+    if (!provincias.length && !nacionales.length) { setStatus('error','No hay novedades para esa fecha.'); return; }
+
+    const total = provincias.length + nacionales.length;
+    const grid = document.createElement('div');
+    grid.className = 'banners-grid';
+    document.getElementById('resultado').appendChild(grid);
+
+    let count = 0;
+
+    for (const prov of provincias) {
+      count++;
+      setStatus('loading', `Procesando ${count} de ${total}: ${prov.label}...`);
+      try {
+        const contenido = await procesarConClaude(apiKey, 'provincial', prov.label, prov.texto, fecha);
+        const card = document.createElement('div');
+        card.className = 'banner-card';
+        card.innerHTML = `<h3>${prov.label}</h3>`;
+        const canvas = document.createElement('canvas');
+        canvas.style.width = '100%';
+        card.appendChild(canvas);
+        const btnRow = document.createElement('div');
+        btnRow.style.textAlign = 'right';
+        const btn = document.createElement('button');
+        btn.className = 'btn-dl';
+        btn.textContent = '⬇ Descargar';
+        btn.onclick = () => {
+          const a = document.createElement('a');
+          a.download = `giraud_${fecha}_${prov.key}.png`;
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+        };
+        btnRow.appendChild(btn);
+        card.appendChild(btnRow);
+        grid.appendChild(card);
+        drawBanner(canvas, contenido, prov.label, 'provincial', fecha, logoImg);
+      } catch(e) {
+        const card = document.createElement('div');
+        card.className = 'banner-card';
+        card.innerHTML = `<h3>${prov.label}</h3><p style="color:#a33;font-size:0.8rem">Error: ${e.message}</p>`;
+        grid.appendChild(card);
+      }
     }
 
-    const novedades = extractNovedades(row);
-    if (!novedades.provincias.length && !novedades.nacionales.length) {
-      setStatus('error','No hay novedades registradas para esa fecha.');
-      return;
+    for (const nac of nacionales) {
+      count++;
+      setStatus('loading', `Procesando ${count} de ${total}: ${nac.label}...`);
+      try {
+        const contenido = await procesarConClaude(apiKey, 'nacional', nac.label, nac.texto, fecha);
+        const card = document.createElement('div');
+        card.className = 'banner-card';
+        card.innerHTML = `<h3>${nac.label}</h3>`;
+        const canvas = document.createElement('canvas');
+        canvas.style.width = '100%';
+        card.appendChild(canvas);
+        const btnRow = document.createElement('div');
+        btnRow.style.textAlign = 'right';
+        const btn = document.createElement('button');
+        btn.className = 'btn-dl';
+        btn.textContent = '⬇ Descargar';
+        btn.onclick = () => {
+          const a = document.createElement('a');
+          a.download = `giraud_${fecha}_${nac.key}.png`;
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+        };
+        btnRow.appendChild(btn);
+        card.appendChild(btnRow);
+        grid.appendChild(card);
+        drawBanner(canvas, contenido, nac.label, 'nacional', fecha, logoImg);
+      } catch(e) {
+        const card = document.createElement('div');
+        card.className = 'banner-card';
+        card.innerHTML = `<h3>${nac.label}</h3><p style="color:#a33;font-size:0.8rem">Error: ${e.message}</p>`;
+        grid.appendChild(card);
+      }
     }
-
-    setStatus('loading','Generando contenido con Claude...');
-    const contenido = await procesarConClaude(apiKey, novedades, fecha);
-
-    setStatus('loading','Dibujando el banner...');
-    drawBanner(contenido, fecha);
 
     hideStatus();
-    document.getElementById('preview-area').className = 'preview-area visible';
 
   } catch(e) {
     setStatus('error', e.message);
   } finally {
     document.getElementById('btn-generar').disabled = false;
   }
-}
-
-function descargarBanner() {
-  const canvas = document.getElementById('banner-canvas');
-  const fecha = document.getElementById('fecha').value || 'banner';
-  const a = document.createElement('a');
-  a.download = `giraud_novedades_${fecha}.png`;
-  a.href = canvas.toDataURL('image/png');
-  a.click();
 }
 </script>
 </body>
