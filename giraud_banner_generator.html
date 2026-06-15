@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Banners — Estudio Giraud</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Gotham','Montserrat','Inter',sans-serif; background: #f5f5f3; min-height: 100vh; padding: 2rem; color: #2c2c2c; }
+  .app-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+  .app-header svg { width: 48px; height: 48px; }
+  .app-title { font-size: 1.1rem; font-weight: 600; color: #3D4F6B; letter-spacing: 0.02em; }
+  .app-subtitle { font-size: 0.8rem; color: #888; letter-spacing: 0.05em; text-transform: uppercase; }
+  .panel { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e8e8e4; }
+  .panel-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #3D4F6B; margin-bottom: 1rem; }
+  .field-row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 200px; }
+  .field label { font-size: 0.78rem; color: #666; font-weight: 500; }
+  input[type="text"], input[type="date"], input[type="password"] { border: 1px solid #ddd; border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; background: white; color: #2c2c2c; width: 100%; }
+  input:focus { outline: 2px solid #3D4F6B; outline-offset: 1px; border-color: transparent; }
+  .btn { padding: 0.65rem 1.4rem; border-radius: 8px; border: none; font-size: 0.88rem; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; }
+  .btn-primary { background: #3D4F6B; color: white; }
+  .btn-primary:hover { background: #2e3d55; }
+  .btn-primary:disabled { background: #a0aab8; cursor: not-allowed; }
+  .btn-secondary { background: white; color: #3D4F6B; border: 1px solid #3D4F6B; }
+  .btn-secondary:hover { background: #f0f3f8; }
+  .status-bar { display: none; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; }
+  .status-bar.loading { display: flex; background: #eef2f8; color: #3D4F6B; }
+  .status-bar.error { display: flex; background: #fdf0f0; color: #a33; }
+  .spinner { width: 16px; height: 16px; border: 2px solid #3D4F6B; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .preview-area { display: none; flex-direction: column; align-items: center; gap: 1rem; }
+  .preview-area.visible { display: flex; }
+  .banner-actions { display: flex; gap: 0.75rem; align-items: center; }
+  #banner-canvas { border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); max-width: 100%; }
+  .tip { font-size: 0.76rem; color: #888; margin-top: 0.4rem; line-height: 1.5; }
+  .tip a { color: #3D4F6B; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="95" fill="#3D4F6B"/>
+    <text x="100" y="128" font-family="Georgia,serif" font-size="110" font-weight="700" fill="white" text-anchor="middle">eg</text>
+  </svg>
+  <div>
+    <div class="app-title">Estudio Giraud</div>
+    <div class="app-subtitle">Generador de Banners · Instagram</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Configuración</div>
+  <div class="field-row" style="margin-bottom:1rem">
+    <div class="field">
+      <label>Google Sheet ID</label>
+      <input type="text" id="sheet-id" value="1zZTi5YPrRPLtZV8Y6-2lPfWXlIEuU_p7jbIkJdUw3Ow" />
+      <div class="tip">La planilla debe estar compartida como "cualquier persona con el link puede ver".</div>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <label>API Key de Anthropic</label>
+      <input type="password" id="api-key" placeholder="sk-ant-..." />
+      <div class="tip">Obtenela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys. Se guarda en tu navegador.</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Generar Banner</div>
+  <div class="field-row">
+    <div class="field" style="max-width:200px">
+      <label>Fecha</label>
+      <input type="date" id="fecha" />
+    </div>
+    <button class="btn btn-primary" id="btn-generar" onclick="generarBanner()">Generar banner</button>
+  </div>
+</div>
+
+<div class="status-bar" id="status">
+  <div class="spinner" id="spinner"></div>
+  <span id="status-text"></span>
+</div>
+
+<div class="preview-area" id="preview-area">
+  <canvas id="banner-canvas" width="1080" height="1080" style="width:540px;height:540px"></canvas>
+  <div class="banner-actions">
+    <button class="btn btn-primary" onclick="descargarBanner()">⬇ Descargar PNG</button>
+    <button class="btn btn-secondary" onclick="generarBanner()">↺ Regenerar</button>
+  </div>
+</div>
+
+<script>
+const COLS = {
+  fecha:0, buenosAires:1, caba:2, cordoba:3, corrientes:4, entreRios:5,
+  laRioja:6, mendoza:7, misiones:8, neuquen:9, rioNegro:10, salta:11,
+  sanJuan:12, santaFe:13, santiagoDelEstero:14, tucuman:15,
+  iva:16, ganancias:17, bienesPersonales:18, impuestosInternos:19,
+  debitosCreditos:20, contabilidad:21, generalOtros:22, convenioMultilateral:23
+};
+
+const COL_LABELS = {
+  buenosAires:'Buenos Aires', caba:'CABA', cordoba:'Córdoba',
+  corrientes:'Corrientes', entreRios:'Entre Ríos', laRioja:'La Rioja',
+  mendoza:'Mendoza', misiones:'Misiones', neuquen:'Neuquén',
+  rioNegro:'Río Negro', salta:'Salta', sanJuan:'San Juan',
+  santaFe:'Santa Fe', santiagoDelEstero:'Santiago del Estero',
+  tucuman:'Tucumán', iva:'IVA', ganancias:'Ganancias',
+  bienesPersonales:'Bienes Personales', impuestosInternos:'Imp. Internos',
+  debitosCreditos:'Débitos y Créditos', contabilidad:'Contabilidad',
+  generalOtros:'General / Otros', convenioMultilateral:'Conv. Multilateral'
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  document.getElementById('fecha').value = today.toISOString().slice(0,10);
+  const saved = localStorage.getItem('giraud_api_key');
+  if (saved) document.getElementById('api-key').value = saved;
+});
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('status');
+  document.getElementById('status-text').textContent = msg;
+  document.getElementById('spinner').style.display = type === 'loading' ? 'block' : 'none';
+  bar.className = 'status-bar ' + type;
+}
+
+function hideStatus() {
+  document.getElementById('status').className = 'status-bar';
+}
+
+async function fetchSheetData(sheetId) {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=novedades_diarias`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('No se pudo leer la planilla. Verificá que esté compartida públicamente.');
+  const text = await resp.text();
+  return parseGviz(text);
+}
+
+function parseGviz(text) {
+  const json = text.replace(/^[^\(]+\(/, '').replace(/\);\s*$/, '');
+  const data = JSON.parse(json);
+  return data.table.rows.map(row =>
+    row.c.map(c => {
+      if (!c || c.v === null || c.v === undefined) return '';
+      if (typeof c.v === 'string' && c.v.startsWith('Date(')) return c.v;
+      return c.f !== undefined && c.f !== null ? String(c.f) : String(c.v);
+    })
+  );
+}
+
+function parseFecha(str) {
+  if (!str) return null;
+  str = str.trim();
+  const dm = str.match(/Date\((\d+),(\d+),(\d+)\)/);
+  if (dm) {
+    const y = dm[1];
+    const m = String(parseInt(dm[2])+1).padStart(2,'0');
+    const d = String(dm[3]).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  const parts = str.replace(/"/g,'').split('/');
+  if (parts.length === 3) {
+    let [d,m,y] = parts;
+    if (y.length === 2) y = '20'+y;
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  return str.slice(0,10);
+}
+
+function findRow(rows, fechaTarget) {
+  for (const row of rows) {
+    if (parseFecha(row[0]) === fechaTarget) return row;
+  }
+  return null;
+}
+
+function extractNovedades(row) {
+  const result = { provincias:[], nacionales:[] };
+  const prov = ['buenosAires','caba','cordoba','corrientes','entreRios','laRioja','mendoza','misiones','neuquen','rioNegro','salta','sanJuan','santaFe','santiagoDelEstero','tucuman'];
+  const nac = ['iva','ganancias','bienesPersonales','impuestosInternos','debitosCreditos','contabilidad','generalOtros','convenioMultilateral'];
+  for (const k of prov) {
+    const v = row[COLS[k]];
+    if (v && v.trim()) result.provincias.push({ lugar: COL_LABELS[k], texto: v.trim() });
+  }
+  for (const k of nac) {
+    const v = row[COLS[k]];
+    if (v && v.trim()) result.nacionales.push({ area: COL_LABELS[k], texto: v.trim() });
+  }
+  return result;
+}
+
+async function procesarConClaude(apiKey, novedades, fecha) {
+  const prompt = `Sos el asistente de Estudio Giraud, un estudio de Contadores Públicos argentino. Recibís novedades legislativas y fiscales del día y debés generar el contenido para un banner de Instagram profesional.
+
+Fecha: ${fecha}
+
+NOVEDADES PROVINCIALES:
+${novedades.provincias.map(p=>`- ${p.lugar}: ${p.texto}`).join('\n')||'(ninguna)'}
+
+NOVEDADES NACIONALES:
+${novedades.nacionales.map(n=>`- ${n.area}: ${n.texto}`).join('\n')||'(ninguna)'}
+
+Generá el contenido para el banner. Respondé SOLO en JSON, sin backticks ni texto extra:
+{
+  "titulo": "título llamativo y breve (máx 6 palabras, en mayúsculas)",
+  "subtitulo": "frase de contexto (máx 10 palabras)",
+  "items": [
+    { "categoria": "etiqueta corta", "texto": "descripción concisa de la novedad (máx 18 palabras)" }
+  ],
+  "cta": "frase de cierre profesional (máx 8 palabras)"
+}
+
+Incluí entre 3 y 6 items, priorizando las novedades más relevantes para empresas y personas físicas. Usá lenguaje claro, no técnico.`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages: [{ role:'user', content: prompt }]
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error('Error API Anthropic: ' + (err.error?.message || resp.status));
+  }
+
+  const data = await resp.json();
+  const text = data.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim();
+  return JSON.parse(text);
+}
+
+function formatFecha(f) {
+  const [y,m,d] = f.split('-');
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `${parseInt(d)} de ${meses[parseInt(m)]} de ${y}`;
+}
+
+function getLines(ctx, text, maxWidth, font) {
+  ctx.font = font;
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur ? cur+' '+w : w;
+    if (ctx.measureText(t).width > maxWidth && cur) { lines.push(cur); cur = w; }
+    else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineH, color, font) {
+  const lines = getLines(ctx, text, maxWidth, font);
+  ctx.font = font; ctx.fillStyle = color;
+  lines.forEach((l,i) => ctx.fillText(l, x, y + i*lineH));
+  return lines.length;
+}
+
+function drawBanner(contenido, fechaStr) {
+  const canvas = document.getElementById('banner-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
+
+  ctx.clearRect(0,0,W,H);
+
+  ctx.fillStyle = '#F8F7F4';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle = '#3D4F6B';
+  ctx.fillRect(0,0,W,190);
+
+  ctx.fillStyle = '#3D4F6B';
+  ctx.fillRect(0, H-110, W, 110);
+
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 32px "Montserrat","Inter",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('ESTUDIO GIRAUD', 80, 88);
+  ctx.font = '17px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = '#8FA8C4';
+  ctx.fillText('CONTADORES PÚBLICOS', 80, 120);
+  ctx.font = '15px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = '#8FA8C4';
+  ctx.textAlign = 'right';
+  ctx.fillText(formatFecha(fechaStr).toUpperCase(), W-80, 104);
+
+  ctx.strokeStyle = '#B8A99A';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(60, 190); ctx.lineTo(W-60, 190); ctx.stroke();
+
+  ctx.textAlign = 'left';
+  const tituloFont = 'bold 58px "Georgia","Times New Roman",serif';
+  const tLines = getLines(ctx, contenido.titulo.toUpperCase(), W-160, tituloFont);
+  wrapText(ctx, contenido.titulo.toUpperCase(), 80, 268, W-160, 70, '#3D4F6B', tituloFont);
+  const tBottom = 268 + tLines.length * 70;
+
+  ctx.font = '24px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = '#7A8FA6';
+  ctx.fillText(contenido.subtitulo, 80, tBottom + 28);
+
+  ctx.strokeStyle = '#D5C9BE';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(80, tBottom+52); ctx.lineTo(W-80, tBottom+52); ctx.stroke();
+
+  const itemsStart = tBottom + 80;
+  const itemsEnd = H - 110 - 30;
+  const itemCount = contenido.items.length;
+  const slotH = (itemsEnd - itemsStart) / itemCount;
+
+  for (let i = 0; i < itemCount; i++) {
+    const item = contenido.items[i];
+    const y = itemsStart + i * slotH;
+
+    ctx.fillStyle = '#3D4F6B';
+    ctx.beginPath();
+    ctx.roundRect(80, y+2, 5, 40, 2);
+    ctx.fill();
+
+    ctx.font = 'bold 14px "Montserrat","Inter",sans-serif';
+    ctx.fillStyle = '#3D4F6B';
+    ctx.fillText(item.categoria.toUpperCase(), 104, y + 18);
+
+    ctx.font = '20px "Montserrat","Inter",sans-serif';
+    ctx.fillStyle = '#3a3a3a';
+    wrapText(ctx, item.texto, 104, y + 38, W-184, 25, '#3a3a3a', '20px "Montserrat","Inter",sans-serif');
+  }
+
+  ctx.fillStyle = 'white';
+  ctx.font = '20px "Montserrat","Inter",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(contenido.cta, W/2, H-42);
+  ctx.textAlign = 'left';
+}
+
+async function generarBanner() {
+  const sheetId = document.getElementById('sheet-id').value.trim();
+  const apiKey = document.getElementById('api-key').value.trim();
+  const fecha = document.getElementById('fecha').value;
+
+  if (!sheetId) { setStatus('error','Ingresá el ID de la planilla.'); return; }
+  if (!apiKey) { setStatus('error','Ingresá tu API Key de Anthropic.'); return; }
+  if (!fecha) { setStatus('error','Seleccioná una fecha.'); return; }
+
+  localStorage.setItem('giraud_api_key', apiKey);
+  document.getElementById('btn-generar').disabled = true;
+  document.getElementById('preview-area').className = 'preview-area';
+
+  try {
+    setStatus('loading','Leyendo la planilla...');
+    const rows = await fetchSheetData(sheetId);
+
+    setStatus('loading','Buscando novedades del día...');
+    const row = findRow(rows, fecha);
+    if (!row) {
+      setStatus('error',`No hay novedades para el ${formatFecha(fecha)}. Verificá que la fecha esté en la planilla.`);
+      return;
+    }
+
+    const novedades = extractNovedades(row);
+    if (!novedades.provincias.length && !novedades.nacionales.length) {
+      setStatus('error','No hay novedades registradas para esa fecha.');
+      return;
+    }
+
+    setStatus('loading','Generando contenido con Claude...');
+    const contenido = await procesarConClaude(apiKey, novedades, fecha);
+
+    setStatus('loading','Dibujando el banner...');
+    drawBanner(contenido, fecha);
+
+    hideStatus();
+    document.getElementById('preview-area').className = 'preview-area visible';
+
+  } catch(e) {
+    setStatus('error', e.message);
+  } finally {
+    document.getElementById('btn-generar').disabled = false;
+  }
+}
+
+function descargarBanner() {
+  const canvas = document.getElementById('banner-canvas');
+  const fecha = document.getElementById('fecha').value || 'banner';
+  const a = document.createElement('a');
+  a.download = `giraud_novedades_${fecha}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>
