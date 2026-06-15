@@ -31,7 +31,7 @@ input:focus { outline: 2px solid #3D4F6B; outline-offset: 1px; border-color: tra
 .status-bar.error { display: flex; background: #fdf0f0; color: #a33; }
 .spinner { width: 16px; height: 16px; border: 2px solid #3D4F6B; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.banners-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+.banners-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
 .banner-card { background: white; border-radius: 12px; padding: 1rem; border: 1px solid #e2e0d8; }
 .banner-card h3 { font-size: 0.78rem; font-weight: 700; color: #3D4F6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
 .banner-card canvas { width: 100%; border-radius: 6px; display: block; margin-bottom: 0.75rem; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
@@ -40,7 +40,7 @@ input:focus { outline: 2px solid #3D4F6B; outline-offset: 1px; border-color: tra
 <body>
 
 <div class="app-header">
-  <img src="https://laureano-design.github.io/giraud-banners/Logo_Estudio_Giraud_01.jpg" style="height:52px;border-radius:4px" onerror="this.style.display='none'" />
+  <img src="Logo_Estudio_Giraud_01.jpg" style="height:52px;border-radius:4px" onerror="this.style.display='none'" />
   <div>
     <div class="app-title">Estudio Giraud</div>
     <div class="app-subtitle">Generador de Banners · Instagram</div>
@@ -92,7 +92,7 @@ const SHEET_COLS = {
 };
 
 const PROV_KEYS = ['buenosAires','caba','catamarca','chaco','chubut','cordoba','corrientes','entreRios','formosa','jujuy','laPampa','laRioja','mendoza','misiones','neuquen','rioNegro','salta','sanJuan','sanLuis','santaCruz','santaFe','santiagoDelEstero','tierraDelFuego','tucuman'];
-const NAC_KEYS = ['iva','ganancias','bienesPersonales','impuestosInternos','debitosCreditos','contabilidad','generalOtros','convenioMultilateral','laboral'];
+const NAC_KEYS  = ['iva','ganancias','bienesPersonales','impuestosInternos','debitosCreditos','contabilidad','generalOtros','convenioMultilateral','laboral'];
 
 const LABELS = {
   buenosAires:'Buenos Aires', caba:'CABA', catamarca:'Catamarca', chaco:'Chaco',
@@ -108,17 +108,13 @@ const LABELS = {
   convenioMultilateral:'Convenio Multilateral', laboral:'Laboral'
 };
 
-const NAC_SECTION_TITLE = 'NOVEDADES NACIONALES';
-const PROV_SECTION_TITLE = 'NOVEDADES PROVINCIALES';
-
-// Colors
-const C_DARK = '#3D4F6B';
-const C_MID = '#7A8FA6';
-const C_LIGHT = '#B8C8D8';
+const C_DARK  = '#3D4F6B';
+const C_MID   = '#7A8FA6';
+const C_LIGHT = '#8FA8C4';
 const C_BEIGE = '#B8A99A';
-const C_BG = '#F8F7F4';
-const C_TEXT = '#2c2c2c';
-const C_GRAY = '#555';
+const C_BG    = '#F8F7F4';
+const C_TEXT  = '#2c2c2c';
+const C_GRAY  = '#444';
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('fecha').value = new Date().toISOString().slice(0,10);
@@ -174,15 +170,14 @@ function findRow(rows, target) {
 }
 
 function extractData(row) {
-  const provincias = [];
-  const nacionales = [];
+  const provincias = [], nacionales = [];
   for (const k of PROV_KEYS) {
     const v = row[SHEET_COLS[k]];
-    if (v && v.trim()) provincias.push({ key: k, label: LABELS[k], texto: v.trim() });
+    if (v && v.trim()) provincias.push({ key:k, label:LABELS[k], texto:v.trim() });
   }
   for (const k of NAC_KEYS) {
     const v = row[SHEET_COLS[k]];
-    if (v && v.trim()) nacionales.push({ key: k, label: LABELS[k], texto: v.trim() });
+    if (v && v.trim()) nacionales.push({ key:k, label:LABELS[k], texto:v.trim() });
   }
   return { provincias, nacionales };
 }
@@ -195,13 +190,12 @@ Tipo: ${tipo}
 Fecha: ${fecha}
 Texto completo: ${textoCompleto}
 
-Respondé SOLO en JSON sin backticks:
+Respondé SOLO en JSON sin backticks ni texto extra:
 {
   "titulo": "título impactante en mayúsculas (máx 6 palabras)",
   "subtitulo": "frase de contexto clara (máx 12 palabras)",
-  "resumen": "resumen ejecutivo del tema en 1-2 oraciones claras para empresarios (máx 40 palabras)",
-  "detalle": "desarrollo más completo del tema, qué cambia, a quién afecta, vigencia si la hay (máx 80 palabras, lenguaje claro no técnico)",
-  "cta": "llamada a la acción profesional (máx 8 palabras)"
+  "resumen": "resumen ejecutivo en 1-2 oraciones claras para empresarios (máx 40 palabras)",
+  "detalle": "desarrollo completo: qué cambia, a quién afecta, vigencia (máx 80 palabras, lenguaje claro)"
 }`;
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -212,17 +206,9 @@ Respondé SOLO en JSON sin backticks:
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 800,
-      messages: [{ role:'user', content: prompt }]
-    })
+    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user',content:prompt}] })
   });
-
-  if (!resp.ok) {
-    const err = await resp.json();
-    throw new Error('Error API: ' + (err.error?.message || resp.status));
-  }
+  if (!resp.ok) { const e = await resp.json(); throw new Error('Error API: '+(e.error?.message||resp.status)); }
   const data = await resp.json();
   const text = data.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim();
   return JSON.parse(text);
@@ -237,8 +223,7 @@ function formatFecha(f) {
 function getLines(ctx, text, maxWidth, font) {
   ctx.font = font;
   const words = text.split(' ');
-  const lines = [];
-  let cur = '';
+  const lines = []; let cur = '';
   for (const w of words) {
     const t = cur ? cur+' '+w : w;
     if (ctx.measureText(t).width > maxWidth && cur) { lines.push(cur); cur = w; }
@@ -251,236 +236,201 @@ function getLines(ctx, text, maxWidth, font) {
 function wrapText(ctx, text, x, y, maxWidth, lineH, color, font) {
   const lines = getLines(ctx, text, maxWidth, font);
   ctx.font = font; ctx.fillStyle = color;
-  lines.forEach((l,i) => ctx.fillText(l, x, y + i*lineH));
+  lines.forEach((l,i) => ctx.fillText(l, x, y+i*lineH));
   return lines.length;
 }
 
-function drawBanner(canvas, contenido, label, tipo, fechaStr, logoImg) {
+function drawBanner(canvas, contenido, label, tipo, fechaStr, logoCompleto, logoIsotipo) {
   const ctx = canvas.getContext('2d');
-  const W = 1080, H = 1350; // portrait for more content
+  const W = 1080, H = 1350;
   canvas.width = W; canvas.height = H;
 
   // BG
   ctx.fillStyle = C_BG;
   ctx.fillRect(0,0,W,H);
 
-  // Header dark bar
-  ctx.fillStyle = C_DARK;
-  ctx.fillRect(0,0,W,160);
-
-  // Footer dark bar
-  ctx.fillStyle = C_DARK;
-  ctx.fillRect(0, H-100, W, 100);
-
-  // Logo in header
-  if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
-    const logoH = 80;
-    const logoW = logoImg.naturalWidth * (logoH / logoImg.naturalHeight);
-    ctx.drawImage(logoImg, 60, 40, logoW, logoH);
-  } else {
-    // fallback text logo
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 28px Georgia,serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('ESTUDIO GIRAUD', 70, 88);
-    ctx.font = '16px "Montserrat","Inter",sans-serif';
-    ctx.fillStyle = C_LIGHT;
-    ctx.fillText('CONTADORES PÚBLICOS', 70, 115);
+  // Watermark: isotipo gigante centrado
+  if (logoIsotipo && logoIsotipo.complete && logoIsotipo.naturalWidth > 0) {
+    const wmSize = 900;
+    const wmW = logoIsotipo.naturalWidth * (wmSize / logoIsotipo.naturalHeight);
+    ctx.save();
+    ctx.globalAlpha = 0.035;
+    ctx.drawImage(logoIsotipo, (W-wmW)/2, (H-wmSize)/2, wmW, wmSize);
+    ctx.restore();
   }
 
-  // Date top right
-  ctx.fillStyle = C_LIGHT;
-  ctx.font = '15px "Montserrat","Inter",sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText(formatFecha(fechaStr).toUpperCase(), W-70, 95);
+  // ── HEADER ──
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0,0,W,140);
 
-  // Section tag
+  // Fecha izquierda
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 22px "Montserrat","Inter",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(formatFecha(fechaStr).toUpperCase(), 70, 72);
+
+  // Sección derecha
   ctx.textAlign = 'right';
   ctx.fillStyle = C_BEIGE;
-  ctx.font = '13px "Montserrat","Inter",sans-serif';
-  ctx.fillText(tipo === 'provincial' ? PROV_SECTION_TITLE : NAC_SECTION_TITLE, W-70, 120);
+  ctx.font = 'bold 15px "Montserrat","Inter",sans-serif';
+  ctx.fillText(tipo === 'provincial' ? 'NOVEDADES PROVINCIALES' : 'NOVEDADES NACIONALES', W-70, 72);
 
-  // Separator
+  // Separador bajo header
   ctx.strokeStyle = C_BEIGE;
   ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(60, 160); ctx.lineTo(W-60, 160); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,140); ctx.lineTo(W-60,140); ctx.stroke();
 
-  // Province/area name BIG
   ctx.textAlign = 'left';
-  const labelFont = 'bold 72px Georgia,"Times New Roman",serif';
+  let y = 200;
+
+  // 1. NOMBRE ÁREA/PROVINCIA — grande
+  const labelFont = 'bold 74px Georgia,"Times New Roman",serif';
   const labelLines = getLines(ctx, label.toUpperCase(), W-120, labelFont);
-  wrapText(ctx, label.toUpperCase(), 60, 250, W-120, 82, C_DARK, labelFont);
-  const labelBottom = 250 + labelLines.length * 82;
+  wrapText(ctx, label.toUpperCase(), 60, y, W-120, 84, C_DARK, labelFont);
+  y += labelLines.length * 84 + 8;
 
-  // Subtitle
-  ctx.font = '24px "Montserrat","Inter",sans-serif';
-  ctx.fillStyle = C_MID;
-  const subLines = wrapText(ctx, contenido.subtitulo, 60, labelBottom + 20, W-120, 32, C_MID, '24px "Montserrat","Inter",sans-serif');
-  const subBottom = labelBottom + 20 + subLines * 32;
+  // 2. TÍTULO IMPACTANTE — segundo lugar, mediano
+  const titFont = 'bold 44px Georgia,"Times New Roman",serif';
+  const titLines = getLines(ctx, contenido.titulo, W-120, titFont);
+  wrapText(ctx, contenido.titulo, 60, y, W-120, 54, C_MID, titFont);
+  y += titLines.length * 54 + 22;
 
-  // Divider
+  // Línea divisoria
   ctx.strokeStyle = '#D5C9BE';
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(60, subBottom+20); ctx.lineTo(W-60, subBottom+20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
+  y += 28;
 
-  // RESUMEN box
-  let y = subBottom + 50;
+  // 3. SUBTÍTULO
+  const subLines = wrapText(ctx, contenido.subtitulo, 60, y, W-120, 32, C_MID, '23px "Montserrat","Inter",sans-serif');
+  y += subLines * 32 + 28;
+
+  // 4. RESUMEN — caja azul clara
+  const resFont = '21px "Montserrat","Inter",sans-serif';
+  const resLines = getLines(ctx, contenido.resumen, W-180, resFont);
+  const resBoxH = resLines.length * 30 + 48;
   ctx.fillStyle = '#EEF2F8';
-  const resLines = getLines(ctx, contenido.resumen, W-180, '22px "Montserrat","Inter",sans-serif');
-  const resBoxH = resLines.length * 30 + 40;
-  ctx.beginPath();
-  ctx.roundRect(60, y, W-120, resBoxH, 8);
-  ctx.fill();
+  ctx.beginPath(); ctx.roundRect(60, y, W-120, resBoxH, 8); ctx.fill();
+  ctx.font = 'bold 12px "Montserrat","Inter",sans-serif';
   ctx.fillStyle = C_DARK;
-  ctx.font = 'bold 13px "Montserrat","Inter",sans-serif';
-  ctx.fillText('RESUMEN', 80, y+22);
-  wrapText(ctx, contenido.resumen, 80, y+44, W-160, 30, C_TEXT, '22px "Montserrat","Inter",sans-serif');
-  y += resBoxH + 30;
+  ctx.fillText('RESUMEN', 80, y+20);
+  wrapText(ctx, contenido.resumen, 80, y+42, W-160, 30, C_TEXT, resFont);
+  y += resBoxH + 28;
 
-  // DETALLE section
+  // 5. DESARROLLO
   ctx.fillStyle = C_DARK;
-  ctx.beginPath();
-  ctx.roundRect(60, y, 5, 20, 2);
-  ctx.fill();
-  ctx.font = 'bold 14px "Montserrat","Inter",sans-serif';
+  ctx.beginPath(); ctx.roundRect(60, y+2, 5, 18, 2); ctx.fill();
+  ctx.font = 'bold 12px "Montserrat","Inter",sans-serif';
   ctx.fillStyle = C_DARK;
   ctx.fillText('DESARROLLO', 82, y+15);
-  y += 35;
+  y += 30;
+  wrapText(ctx, contenido.detalle, 60, y, W-120, 30, C_GRAY, '21px "Montserrat","Inter",sans-serif');
 
-  const detLines = wrapText(ctx, contenido.detalle, 60, y, W-120, 30, C_GRAY, '21px "Montserrat","Inter",sans-serif');
-  y += detLines * 30 + 20;
+  // ── FOOTER ──
+  const footerH = 130;
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0, H-footerH, W, footerH);
 
-  // Thin line before titulo
-  ctx.strokeStyle = '#D5C9BE';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W-60, y); ctx.stroke();
-  y += 25;
+  // Logo completo en el footer centrado
+  if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
+    const logoH = 58;
+    const logoW = logoCompleto.naturalWidth * (logoH / logoCompleto.naturalHeight);
+    const logoX = (W - logoW) / 2;
+    ctx.drawImage(logoCompleto, logoX, H-footerH+10, logoW, logoH);
+  }
 
-  // BIG TITLE
-  const titFont = 'bold 52px Georgia,"Times New Roman",serif';
-  const titLines = getLines(ctx, contenido.titulo, W-120, titFont);
-  wrapText(ctx, contenido.titulo, 60, y, W-120, 62, C_DARK, titFont);
-
-  // Footer CTA
-  ctx.fillStyle = 'white';
-  ctx.font = '20px "Montserrat","Inter",sans-serif';
+  // "Consultanos para más información" debajo del logo
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '17px "Montserrat","Inter",sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(contenido.cta, W/2, H-38);
+  ctx.fillText('Consultanos para más información', W/2, H-14);
   ctx.textAlign = 'left';
 }
 
-let logoImg = null;
+let logoCompleto = null;
+let logoIsotipo  = null;
 
-function preloadLogo() {
-  return new Promise(resolve => {
+function preloadImgs() {
+  const load = src => new Promise(resolve => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => { logoImg = img; resolve(); };
-    img.onerror = () => resolve();
-    img.src = 'Logo_Estudio_Giraud_01.jpg';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
   });
+  return Promise.all([
+    load('Logo_Estudio_Giraud_01.jpg'),
+    load('Logo_Estudio_Giraud-04.jpg')
+  ]).then(([c, i]) => { logoCompleto = c; logoIsotipo = i; });
+}
+
+function crearCard(label, key, fecha, grid) {
+  const card = document.createElement('div');
+  card.className = 'banner-card';
+  card.innerHTML = `<h3>${label}</h3>`;
+  const canvas = document.createElement('canvas');
+  canvas.style.width = '100%';
+  card.appendChild(canvas);
+  const btnRow = document.createElement('div');
+  btnRow.style.textAlign = 'right';
+  const btn = document.createElement('button');
+  btn.className = 'btn-dl';
+  btn.textContent = '⬇ Descargar';
+  btn.onclick = () => {
+    const a = document.createElement('a');
+    a.download = `giraud_${fecha}_${key}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  btnRow.appendChild(btn);
+  card.appendChild(btnRow);
+  grid.appendChild(card);
+  return canvas;
 }
 
 async function generarTodos() {
   const sheetId = document.getElementById('sheet-id').value.trim();
-  const apiKey = document.getElementById('api-key').value.trim();
-  const fecha = document.getElementById('fecha').value;
-
+  const apiKey  = document.getElementById('api-key').value.trim();
+  const fecha   = document.getElementById('fecha').value;
   if (!sheetId || !apiKey || !fecha) { setStatus('error','Completá todos los campos.'); return; }
   localStorage.setItem('giraud_api_key', apiKey);
-
   document.getElementById('btn-generar').disabled = true;
   document.getElementById('resultado').innerHTML = '';
 
   try {
-    setStatus('loading','Cargando logo...');
-    await preloadLogo();
+    setStatus('loading','Cargando logos...');
+    await preloadImgs();
 
     setStatus('loading','Leyendo la planilla...');
     const rows = await fetchSheet(sheetId);
-    const row = findRow(rows, fecha);
+    const row  = findRow(rows, fecha);
     if (!row) { setStatus('error',`No hay datos para el ${formatFecha(fecha)}.`); return; }
 
     const { provincias, nacionales } = extractData(row);
     if (!provincias.length && !nacionales.length) { setStatus('error','No hay novedades para esa fecha.'); return; }
 
-    const total = provincias.length + nacionales.length;
-    const grid = document.createElement('div');
+    const todos  = [...provincias, ...nacionales];
+    const total  = todos.length;
+    const grid   = document.createElement('div');
     grid.className = 'banners-grid';
     document.getElementById('resultado').appendChild(grid);
 
-    let count = 0;
-
-    for (const prov of provincias) {
-      count++;
-      setStatus('loading', `Procesando ${count} de ${total}: ${prov.label}...`);
+    for (let i = 0; i < todos.length; i++) {
+      const item = todos[i];
+      const tipo = i < provincias.length ? 'provincial' : 'nacional';
+      setStatus('loading', `Procesando ${i+1} de ${total}: ${item.label}...`);
       try {
-        const contenido = await procesarConClaude(apiKey, 'provincial', prov.label, prov.texto, fecha);
-        const card = document.createElement('div');
-        card.className = 'banner-card';
-        card.innerHTML = `<h3>${prov.label}</h3>`;
-        const canvas = document.createElement('canvas');
-        canvas.style.width = '100%';
-        card.appendChild(canvas);
-        const btnRow = document.createElement('div');
-        btnRow.style.textAlign = 'right';
-        const btn = document.createElement('button');
-        btn.className = 'btn-dl';
-        btn.textContent = '⬇ Descargar';
-        btn.onclick = () => {
-          const a = document.createElement('a');
-          a.download = `giraud_${fecha}_${prov.key}.png`;
-          a.href = canvas.toDataURL('image/png');
-          a.click();
-        };
-        btnRow.appendChild(btn);
-        card.appendChild(btnRow);
-        grid.appendChild(card);
-        drawBanner(canvas, contenido, prov.label, 'provincial', fecha, logoImg);
+        const contenido = await procesarConClaude(apiKey, tipo, item.label, item.texto, fecha);
+        const canvas = crearCard(item.label, item.key, fecha, grid);
+        drawBanner(canvas, contenido, item.label, tipo, fecha, logoCompleto, logoIsotipo);
       } catch(e) {
         const card = document.createElement('div');
         card.className = 'banner-card';
-        card.innerHTML = `<h3>${prov.label}</h3><p style="color:#a33;font-size:0.8rem">Error: ${e.message}</p>`;
+        card.innerHTML = `<h3>${item.label}</h3><p style="color:#a33;font-size:0.8rem;padding:0.5rem">Error: ${e.message}</p>`;
         grid.appendChild(card);
       }
     }
-
-    for (const nac of nacionales) {
-      count++;
-      setStatus('loading', `Procesando ${count} de ${total}: ${nac.label}...`);
-      try {
-        const contenido = await procesarConClaude(apiKey, 'nacional', nac.label, nac.texto, fecha);
-        const card = document.createElement('div');
-        card.className = 'banner-card';
-        card.innerHTML = `<h3>${nac.label}</h3>`;
-        const canvas = document.createElement('canvas');
-        canvas.style.width = '100%';
-        card.appendChild(canvas);
-        const btnRow = document.createElement('div');
-        btnRow.style.textAlign = 'right';
-        const btn = document.createElement('button');
-        btn.className = 'btn-dl';
-        btn.textContent = '⬇ Descargar';
-        btn.onclick = () => {
-          const a = document.createElement('a');
-          a.download = `giraud_${fecha}_${nac.key}.png`;
-          a.href = canvas.toDataURL('image/png');
-          a.click();
-        };
-        btnRow.appendChild(btn);
-        card.appendChild(btnRow);
-        grid.appendChild(card);
-        drawBanner(canvas, contenido, nac.label, 'nacional', fecha, logoImg);
-      } catch(e) {
-        const card = document.createElement('div');
-        card.className = 'banner-card';
-        card.innerHTML = `<h3>${nac.label}</h3><p style="color:#a33;font-size:0.8rem">Error: ${e.message}</p>`;
-        grid.appendChild(card);
-      }
-    }
-
     hideStatus();
-
   } catch(e) {
     setStatus('error', e.message);
   } finally {
