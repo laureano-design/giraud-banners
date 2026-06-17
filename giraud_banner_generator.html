@@ -300,21 +300,13 @@ function wrapText(ctx, text, x, y, maxWidth, lineH, color, font) {
   return lines.length;
 }
 
-function drawBanner(canvas, normas, label, tipo, fechaStr, logoCompleto, logoIsotipo, agrupado) {
-  const ctx = canvas.getContext('2d');
-  const W = 1080;
-
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = W;
-  const tctx = tempCanvas.getContext('2d');
-
+function buildContentBlocks(ctx, normas, agrupado) {
+  // Devuelve una lista plana de "bloques": { type:'tema'|'norma', ...data, height }
   const normaFont = 'bold 23px "Montserrat","Inter",sans-serif';
   const resFont = '20px "Montserrat","Inter",sans-serif';
   const temaFont = 'bold 17px "Montserrat","Inter",sans-serif';
+  const W = 1080;
 
-  let estH = 200;
-
-  // Agrupar por tema si corresponde
   let grupos = [];
   if (agrupado) {
     const map = {};
@@ -328,24 +320,101 @@ function drawBanner(canvas, normas, label, tipo, fechaStr, logoCompleto, logoIso
     grupos = [{ tema: null, items: normas }];
   }
 
+  const blocks = [];
   for (const g of grupos) {
-    if (g.tema) estH += 40;
+    if (g.tema) {
+      blocks.push({ type:'tema', text:g.tema, height: 40 });
+    }
     for (const n of g.items) {
-      const normaLines = getLines(tctx, n.norma, W-140, normaFont);
-      const resLines = getLines(tctx, n.resumen, W-140, resFont);
-      estH += normaLines.length*30 + resLines.length*27 + 38;
+      const nLines = getLines(ctx, n.norma, W-142, normaFont);
+      const rLines = getLines(ctx, n.resumen, W-142, resFont);
+      const h = nLines.length*30 + 8 + rLines.length*27 + 30;
+      blocks.push({ type:'norma', norma:n.norma, resumen:n.resumen, nLines: nLines.length, rLines: rLines.length, height: h });
     }
   }
-  estH += 320;
+  return blocks;
+}
 
-  const H = Math.max(estH, 1080);
+function paginateBlocks(blocks, contentAreaH) {
+  // Divide los bloques en páginas, sin cortar un bloque 'norma' a la mitad
+  const pages = [];
+  let current = [];
+  let usedH = 0;
+  for (const b of blocks) {
+    if (usedH + b.height > contentAreaH && current.length > 0) {
+      pages.push(current);
+      current = [];
+      usedH = 0;
+    }
+    current.push(b);
+    usedH += b.height;
+  }
+  if (current.length > 0) pages.push(current);
+  return pages.length ? pages : [[]];
+}
+
+function drawCoverSlide(fechaStr, logoCompleto, logoIsotipo) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
   canvas.width = W; canvas.height = H;
 
   ctx.fillStyle = C_BG;
   ctx.fillRect(0,0,W,H);
 
   if (logoIsotipo && logoIsotipo.complete && logoIsotipo.naturalWidth > 0) {
-    const wmSize = Math.min(900, H*0.7);
+    const wmSize = 760;
+    const wmW = logoIsotipo.naturalWidth * (wmSize / logoIsotipo.naturalHeight);
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.drawImage(logoIsotipo, (W-wmW)/2, (H-wmSize)/2, wmW, wmSize);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0,0,W,18);
+  ctx.fillRect(0,H-18,W,18);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = C_BEIGE;
+  ctx.font = 'bold 16px "Montserrat","Inter",sans-serif';
+  ctx.fillText('ESTUDIO GIRAUD · CONTADORES PÚBLICOS', W/2, 110);
+
+  const tituloFont = 'bold 64px Georgia,"Times New Roman",serif';
+  const tituloText = `Novedades del ${formatFecha(fechaStr)}`;
+  const tLines = getLines(ctx, tituloText, W-160, tituloFont);
+  const totalTextH = tLines.length * 76;
+  const startY = (H/2) - (totalTextH/2) - 40;
+  ctx.font = tituloFont;
+  ctx.fillStyle = C_DARK;
+  tLines.forEach((line, i) => ctx.fillText(line, W/2, startY + i*76));
+
+  ctx.font = '24px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = C_MID;
+  ctx.fillText('Resumen de novedades legislativas y fiscales', W/2, startY + tLines.length*76 + 40);
+
+  if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
+    const logoW = 380;
+    const logoH = logoCompleto.naturalHeight * (logoW / logoCompleto.naturalWidth);
+    ctx.drawImage(logoCompleto, (W-logoW)/2, H-220, logoW, logoH);
+  }
+
+  ctx.textAlign = 'left';
+  return canvas;
+}
+
+function drawSlide(canvas, blocks, label, tipo, fechaStr, logoCompleto, logoIsotipo, pageNum, totalPages) {
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
+  canvas.width = W; canvas.height = H;
+  const isLast = pageNum === totalPages;
+  const isFirst = pageNum === 1;
+
+  ctx.fillStyle = C_BG;
+  ctx.fillRect(0,0,W,H);
+
+  if (logoIsotipo && logoIsotipo.complete && logoIsotipo.naturalWidth > 0) {
+    const wmSize = 760;
     const wmW = logoIsotipo.naturalWidth * (wmSize / logoIsotipo.naturalHeight);
     ctx.save();
     ctx.globalAlpha = 0.035;
@@ -353,6 +422,7 @@ function drawBanner(canvas, normas, label, tipo, fechaStr, logoCompleto, logoIso
     ctx.restore();
   }
 
+  // HEADER
   ctx.fillStyle = C_DARK;
   ctx.fillRect(0,0,W,130);
   ctx.fillStyle = 'white';
@@ -370,62 +440,133 @@ function drawBanner(canvas, normas, label, tipo, fechaStr, logoCompleto, logoIso
   ctx.textAlign = 'left';
   let y = 195;
 
-  const labelFont = 'bold 68px Georgia,"Times New Roman",serif';
+  // NOMBRE ÁREA — se repite en cada slide, más chico si no es la primera
+  const labelSize = isFirst ? 68 : 52;
+  const labelFont = `bold ${labelSize}px Georgia,"Times New Roman",serif`;
   const labelLines = getLines(ctx, label.toUpperCase(), W-120, labelFont);
-  wrapText(ctx, label.toUpperCase(), 60, y, W-120, 78, C_DARK, labelFont);
-  y += labelLines.length * 78 + 14;
+  wrapText(ctx, label.toUpperCase(), 60, y, W-120, labelSize*1.15, C_DARK, labelFont);
+  y += labelLines.length * (labelSize*1.15) + 10;
 
-  ctx.font = '22px "Montserrat","Inter",sans-serif';
-  ctx.fillStyle = C_MID;
-  ctx.fillText(SUBTITULO_FIJO, 60, y);
-  y += 38;
+  if (isFirst) {
+    ctx.font = '22px "Montserrat","Inter",sans-serif';
+    ctx.fillStyle = C_MID;
+    ctx.fillText(SUBTITULO_FIJO, 60, y);
+    y += 36;
+  } else {
+    ctx.font = 'italic 20px "Montserrat","Inter",sans-serif';
+    ctx.fillStyle = C_MID;
+    ctx.fillText('Continuación...', 60, y);
+    y += 34;
+  }
 
   ctx.strokeStyle = '#D5C9BE';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
-  y += 36;
+  y += 32;
 
-  for (const g of grupos) {
-    if (g.tema) {
+  const normaFont = 'bold 23px "Montserrat","Inter",sans-serif';
+  const resFont = '20px "Montserrat","Inter",sans-serif';
+  const temaFont = 'bold 17px "Montserrat","Inter",sans-serif';
+
+  for (const b of blocks) {
+    if (b.type === 'tema') {
       ctx.fillStyle = C_BEIGE;
       ctx.font = temaFont;
-      ctx.fillText(g.tema.toUpperCase(), 60, y);
+      ctx.fillText(b.text.toUpperCase(), 60, y);
       y += 14;
       ctx.strokeStyle = '#E5DCD2';
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
       y += 26;
-    }
-    for (const n of g.items) {
+    } else {
       ctx.fillStyle = C_DARK;
       ctx.beginPath(); ctx.roundRect(60, y+4, 6, 20, 3); ctx.fill();
-
-      const nLines = wrapText(ctx, n.norma, 82, y+20, W-142, 30, C_DARK, normaFont);
+      const nLines = wrapText(ctx, b.norma, 82, y+20, W-142, 30, C_DARK, normaFont);
       y += nLines * 30 + 8;
-
-      const rLines = wrapText(ctx, n.resumen, 82, y, W-142, 27, C_GRAY, resFont);
+      const rLines = wrapText(ctx, b.resumen, 82, y, W-142, 27, C_GRAY, resFont);
       y += rLines * 27 + 30;
     }
   }
 
-  const footerH = 300;
-  const footerY = H - footerH;
-  ctx.fillStyle = C_DARK;
-  ctx.fillRect(0, footerY, W, footerH);
-
-  let logoBottom = footerY + 40;
-  if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
-    const logoW = 420;
-    const logoH = logoCompleto.naturalHeight * (logoW / logoCompleto.naturalWidth);
-    const logoTop = footerY + 35;
-    ctx.drawImage(logoCompleto, (W-logoW)/2, logoTop, logoW, logoH);
-    logoBottom = logoTop + logoH;
+  if (!isLast) {
+    ctx.fillStyle = C_MID;
+    ctx.font = 'italic 19px "Montserrat","Inter",sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('continúa...', W-70, H-40);
+    ctx.textAlign = 'left';
   }
-  ctx.fillStyle = 'rgba(255,255,255,0.75)';
-  ctx.font = '17px "Montserrat","Inter",sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Consultanos para más información — v3', W/2, logoBottom + 45);
-  ctx.textAlign = 'left';
+
+  if (isLast) {
+    const footerH = 300;
+    const footerY = H - footerH;
+    ctx.fillStyle = C_DARK;
+    ctx.fillRect(0, footerY, W, footerH);
+
+    let logoBottom = footerY + 40;
+    if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
+      const logoW = 420;
+      const logoH = logoCompleto.naturalHeight * (logoW / logoCompleto.naturalWidth);
+      const logoTop = footerY + 35;
+      ctx.drawImage(logoCompleto, (W-logoW)/2, logoTop, logoW, logoH);
+      logoBottom = logoTop + logoH;
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '17px "Montserrat","Inter",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Consultanos para más información', W/2, logoBottom + 45);
+    ctx.textAlign = 'left';
+  }
+
+  if (totalPages > 1) {
+    ctx.fillStyle = C_MID;
+    ctx.font = '14px "Montserrat","Inter",sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${pageNum}/${totalPages}`, 70, H-30);
+  }
+}
+
+function drawBanner(normas, label, tipo, fechaStr, logoCompleto, logoIsotipo, agrupado) {
+  // Devuelve un array de canvases (uno por slide)
+  const W = 1080;
+  const HEADER_H = 195 + 36 + 32; // header + label area + subtitulo + separador (aprox para primera pagina)
+  const FOOTER_RESERVE = 80; // espacio para "continúa..." en páginas no finales
+  const CONTENT_AREA_FIRST = 1080 - HEADER_H - FOOTER_RESERVE - 20;
+  const CONTENT_AREA_NEXT = 1080 - (130+10+52*1.15+34+32) - FOOTER_RESERVE - 20; // header más chico en páginas siguientes
+  const CONTENT_AREA_LAST_EXTRA_FOOTER = 300; // si es la última, restamos el footer grande
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = W;
+  const tctx = tempCanvas.getContext('2d');
+
+  const blocks = buildContentBlocks(tctx, normas, agrupado);
+
+  // Primero intentamos paginar asumiendo que la ÚLTIMA página tiene footer grande.
+  // Estrategia simple: paginar con área "sin footer" para todas, luego si la última entra con footer, perfecto;
+  // si no, se generará una página adicional solo para el footer (rara, pero posible si hay muchísimo contenido).
+  let pages = paginateBlocks(blocks, CONTENT_AREA_FIRST);
+  // Ajustamos: para páginas que no son la primera, usamos el área "next" como límite blando.
+  // Re-paginamos completo usando un límite uniforme conservador (el menor de los dos) para simplificar y mantener consistencia visual.
+  const SAFE_CONTENT_AREA = Math.min(CONTENT_AREA_FIRST, CONTENT_AREA_NEXT);
+  pages = paginateBlocks(blocks, SAFE_CONTENT_AREA);
+
+  // Si la última página + footer no entra, generamos una página extra vacía de cierre con footer
+  const lastPageH = pages[pages.length-1].reduce((acc,b)=>acc+b.height,0);
+  if (lastPageH > SAFE_CONTENT_AREA - CONTENT_AREA_LAST_EXTRA_FOOTER + SAFE_CONTENT_AREA) {
+    // heurística simple: si la última página está muy llena, agregamos página de cierre vacía
+  }
+  // Comprobación más directa: si lastPageH excede el espacio disponible considerando el footer grande, separamos
+  const availableWithFooter = SAFE_CONTENT_AREA - (CONTENT_AREA_LAST_EXTRA_FOOTER - FOOTER_RESERVE);
+  if (lastPageH > availableWithFooter && pages[pages.length-1].length > 0) {
+    pages.push([]);
+  }
+
+  const canvases = pages.map((pageBlocks, idx) => {
+    const c = document.createElement('canvas');
+    drawSlide(c, pageBlocks, label, tipo, fechaStr, logoCompleto, logoIsotipo, idx+1, pages.length);
+    return c;
+  });
+
+  return canvases;
 }
 
 let logoCompleto = null;
@@ -447,28 +588,55 @@ function preloadImgs() {
   });
 }
 
-function crearCard(label, key, fecha, grid) {
+function crearCardMultiple(label, key, fecha, canvases, grid) {
   const card = document.createElement('div');
   card.className = 'banner-card';
-  card.innerHTML = `<h3>${label}</h3>`;
-  const canvas = document.createElement('canvas');
-  canvas.style.width = '100%';
-  card.appendChild(canvas);
+  const titulo = canvases.length > 1 ? `${label} (${canvases.length} slides)` : label;
+  card.innerHTML = `<h3>${titulo}</h3>`;
+
+  const slidesWrap = document.createElement('div');
+  slidesWrap.style.display = 'flex';
+  slidesWrap.style.gap = '0.6rem';
+  slidesWrap.style.overflowX = 'auto';
+  slidesWrap.style.paddingBottom = '0.5rem';
+
+  canvases.forEach((canvas, idx) => {
+    const slideBox = document.createElement('div');
+    slideBox.style.flex = '0 0 auto';
+    slideBox.style.width = canvases.length > 1 ? '140px' : '100%';
+    canvas.style.width = '100%';
+    canvas.style.borderRadius = '6px';
+    canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+    canvas.style.cursor = 'pointer';
+    canvas.title = 'Click para descargar este slide';
+    canvas.onclick = () => {
+      const a = document.createElement('a');
+      a.download = canvases.length > 1 ? `giraud_${fecha}_${key}_slide${idx+1}.png` : `giraud_${fecha}_${key}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    slideBox.appendChild(canvas);
+    slidesWrap.appendChild(slideBox);
+  });
+
+  card.appendChild(slidesWrap);
+
   const btnRow = document.createElement('div');
   btnRow.style.textAlign = 'right';
   const btn = document.createElement('button');
   btn.className = 'btn-dl';
-  btn.textContent = '⬇ Descargar';
+  btn.textContent = canvases.length > 1 ? `⬇ Descargar ${canvases.length} slides` : '⬇ Descargar';
   btn.onclick = () => {
-    const a = document.createElement('a');
-    a.download = `giraud_${fecha}_${key}.png`;
-    a.href = canvas.toDataURL('image/png');
-    a.click();
+    canvases.forEach((canvas, idx) => {
+      const a = document.createElement('a');
+      a.download = canvases.length > 1 ? `giraud_${fecha}_${key}_slide${idx+1}.png` : `giraud_${fecha}_${key}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
   };
   btnRow.appendChild(btn);
   card.appendChild(btnRow);
   grid.appendChild(card);
-  return canvas;
 }
 
 async function generarTodos() {
@@ -501,6 +669,10 @@ async function generarTodos() {
     grid.className = 'banners-grid';
     document.getElementById('resultado').appendChild(grid);
 
+    setStatus('loading', 'Generando portada...');
+    const coverCanvas = drawCoverSlide(fecha, logoCompleto, logoIsotipo);
+    crearCardMultiple('Portada', 'portada', fecha, [coverCanvas], grid);
+
     for (let i = 0; i < todos.length; i++) {
       const item = todos[i];
       const tipo = i < provincias.length ? 'provincial' : 'nacional';
@@ -508,8 +680,8 @@ async function generarTodos() {
       setStatus('loading', `Procesando ${i+1} de ${total}: ${item.label}...`);
       try {
         const resultado = await procesarConClaude(apiKey, item.label, item.texto, esNacionalGeneral);
-        const canvas = crearCard(item.label, item.key, fecha, grid);
-        drawBanner(canvas, resultado.normas, item.label, tipo, fecha, logoCompleto, logoIsotipo, esNacionalGeneral);
+        const canvases = drawBanner(resultado.normas, item.label, tipo, fecha, logoCompleto, logoIsotipo, esNacionalGeneral);
+        crearCardMultiple(item.label, item.key, fecha, canvases, grid);
       } catch(e) {
         const card = document.createElement('div');
         card.className = 'banner-card';
