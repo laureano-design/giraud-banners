@@ -336,7 +336,7 @@ function drawBanner(canvas, normas, label, tipo, fechaStr, logoCompleto, logoIso
       estH += normaLines.length*30 + resLines.length*27 + 38;
     }
   }
-  estH += 150;
+  estH += 180;
 
   const H = Math.max(estH, 1080);
   canvas.width = W; canvas.height = H;
@@ -408,20 +408,20 @@ function drawBanner(canvas, normas, label, tipo, fechaStr, logoCompleto, logoIso
     }
   }
 
-  const footerH = 130;
+  const footerH = 160;
   const footerY = H - footerH;
   ctx.fillStyle = C_DARK;
   ctx.fillRect(0, footerY, W, footerH);
 
   if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
-    const logoH = 56;
+    const logoH = 95;
     const logoW = logoCompleto.naturalWidth * (logoH / logoCompleto.naturalHeight);
-    ctx.drawImage(logoCompleto, (W-logoW)/2, footerY+12, logoW, logoH);
+    ctx.drawImage(logoCompleto, (W-logoW)/2, footerY+22, logoW, logoH);
   }
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.font = '16px "Montserrat","Inter",sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Consultanos para más información', W/2, H-16);
+  ctx.fillText('Consultanos para más información', W/2, H-22);
   ctx.textAlign = 'left';
 }
 
