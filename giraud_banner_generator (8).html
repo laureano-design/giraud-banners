@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Banners — Estudio Giraud</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat','Inter',sans-serif; background: #f0efe9; min-height: 100vh; padding: 2rem; color: #2c2c2c; }
+.app-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.app-title { font-size: 1.1rem; font-weight: 700; color: #3D4F6B; }
+.app-subtitle { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+.panel { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e0d8; }
+.panel-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #3D4F6B; margin-bottom: 1rem; }
+.field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.field:last-child { margin-bottom: 0; }
+.field label { font-size: 0.78rem; color: #555; font-weight: 600; }
+input[type="text"], input[type="date"], input[type="password"] { border: 1px solid #d5d3cb; border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; background: white; color: #2c2c2c; width: 100%; }
+input:focus { outline: 2px solid #3D4F6B; outline-offset: 1px; border-color: transparent; }
+.row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+.btn { padding: 0.65rem 1.6rem; border-radius: 8px; border: none; font-size: 0.88rem; font-family: inherit; font-weight: 700; cursor: pointer; letter-spacing: 0.02em; transition: all 0.15s; }
+.btn-primary { background: #3D4F6B; color: white; }
+.btn-primary:hover { background: #2e3d55; }
+.btn-primary:disabled { background: #a0aab8; cursor: not-allowed; }
+.btn-dl { background: #3D4F6B; color: white; font-size: 0.82rem; padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; }
+.btn-dl:hover { background: #2e3d55; }
+.tip { font-size: 0.74rem; color: #888; margin-top: 0.3rem; line-height: 1.5; }
+.tip a { color: #3D4F6B; }
+.status-bar { display: none; align-items: center; gap: 0.7rem; padding: 0.8rem 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; }
+.status-bar.loading { display: flex; background: #eef2f8; color: #3D4F6B; }
+.status-bar.error { display: flex; background: #fdf0f0; color: #a33; }
+.spinner { width: 16px; height: 16px; border: 2px solid #3D4F6B; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.banners-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+.banner-card { background: white; border-radius: 12px; padding: 1rem; border: 1px solid #e2e0d8; }
+.banner-card h3 { font-size: 0.78rem; font-weight: 700; color: #3D4F6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.banner-card canvas { width: 100%; border-radius: 6px; display: block; margin-bottom: 0.75rem; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <img src="Logo_Estudio_Giraud-02.png" style="height:52px" onerror="this.style.display='none'" />
+  <div>
+    <div class="app-title">Estudio Giraud</div>
+    <div class="app-subtitle">Generador de Banners · Instagram</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Configuración</div>
+  <div class="field">
+    <label>Google Sheet ID</label>
+    <input type="text" id="sheet-id" value="1zZTi5YPrRPLtZV8Y6-2lPfWXlIEuU_p7jbIkJdUw3Ow" />
+  </div>
+  <div class="field">
+    <label>API Key de Anthropic</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." />
+    <div class="tip">Obtenela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Generar Banners del Día</div>
+  <div class="row">
+    <div class="field" style="max-width:200px;margin-bottom:0">
+      <label>Fecha</label>
+      <input type="date" id="fecha" />
+    </div>
+    <button class="btn btn-primary" id="btn-generar" onclick="generarTodos()">Generar banners</button>
+  </div>
+</div>
+
+<div class="status-bar" id="status">
+  <div class="spinner" id="spinner"></div>
+  <span id="status-text"></span>
+</div>
+
+<div id="resultado"></div>
+
+<script>
+const SHEET_COLS = {
+  fecha:0, nacional:1,
+  buenosAires:2, caba:3, catamarca:4, chaco:5, chubut:6, cordoba:7,
+  corrientes:8, entreRios:9, formosa:10, jujuy:11, laPampa:12, laRioja:13,
+  mendoza:14, misiones:15, neuquen:16, rioNegro:17, salta:18, sanJuan:19,
+  sanLuis:20, santaCruz:21, santaFe:22, santiagoDelEstero:23, tierraDelFuego:24,
+  tucuman:25,
+  laboralYSeguridadSocial:26, sociedadesConcursosQuiebras:27, contabilidadYAuditoria:28
+};
+
+const PROV_KEYS = ['buenosAires','caba','catamarca','chaco','chubut','cordoba','corrientes','entreRios','formosa','jujuy','laPampa','laRioja','mendoza','misiones','neuquen','rioNegro','salta','sanJuan','sanLuis','santaCruz','santaFe','santiagoDelEstero','tierraDelFuego','tucuman'];
+const NAC_KEYS  = ['nacional','laboralYSeguridadSocial','sociedadesConcursosQuiebras','contabilidadYAuditoria'];
+
+const LABELS = {
+  buenosAires:'Buenos Aires', caba:'CABA', catamarca:'Catamarca', chaco:'Chaco',
+  chubut:'Chubut', cordoba:'Córdoba', corrientes:'Corrientes', entreRios:'Entre Ríos',
+  formosa:'Formosa', jujuy:'Jujuy', laPampa:'La Pampa', laRioja:'La Rioja',
+  mendoza:'Mendoza', misiones:'Misiones', neuquen:'Neuquén', rioNegro:'Río Negro',
+  salta:'Salta', sanJuan:'San Juan', sanLuis:'San Luis', santaCruz:'Santa Cruz',
+  santaFe:'Santa Fe', santiagoDelEstero:'Santiago del Estero', tierraDelFuego:'Tierra del Fuego',
+  tucuman:'Tucumán',
+  nacional:'Nacional', laboralYSeguridadSocial:'Laboral y Seguridad Social',
+  sociedadesConcursosQuiebras:'Sociedades, Concursos y Quiebras',
+  contabilidadYAuditoria:'Contabilidad y Auditoría'
+};
+
+const C_DARK  = '#3D4F6B';
+const C_MID   = '#7A8FA6';
+const C_BEIGE = '#B8A99A';
+const C_BG    = '#F8F7F4';
+const C_TEXT  = '#2c2c2c';
+const C_GRAY  = '#444';
+const SUBTITULO_FIJO = 'Novedades relevantes del día';
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('fecha').value = new Date().toISOString().slice(0,10);
+  const saved = localStorage.getItem('giraud_api_key');
+  if (saved) document.getElementById('api-key').value = saved;
+});
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('status');
+  document.getElementById('status-text').textContent = msg;
+  document.getElementById('spinner').style.display = type === 'loading' ? 'block' : 'none';
+  bar.className = 'status-bar ' + type;
+}
+function hideStatus() { document.getElementById('status').className = 'status-bar'; }
+
+async function fetchSheet(sheetId) {
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=novedades_diarias`;
+  const jinaUrl = `https://r.jina.ai/${csvUrl}`;
+
+  let text;
+  let viaJina = false;
+  try {
+    const resp = await fetch(jinaUrl);
+    if (!resp.ok) throw new Error('status ' + resp.status);
+    text = await resp.text();
+    viaJina = true;
+  } catch (e1) {
+    try {
+      const resp2 = await fetch(csvUrl);
+      if (!resp2.ok) throw new Error('status ' + resp2.status);
+      text = await resp2.text();
+    } catch (e2) {
+      throw new Error('No se pudo leer la planilla. (jina: ' + e1.message + ' / directo: ' + e2.message + ')');
+    }
+  }
+  if (!text || text.length < 5) throw new Error('La planilla devolvió contenido vacío');
+
+  if (viaJina) {
+    const marker = 'Markdown Content:';
+    const idx = text.indexOf(marker);
+    if (idx !== -1) text = text.slice(idx + marker.length);
+    text = text.replace(/^\s+/, '');
+  }
+
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let i = 0;
+  const len = text.length;
+  let row = [];
+  let cell = '';
+  let inQuotes = false;
+  while (i < len) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i+1] === '"') { cell += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      cell += ch; i++; continue;
+    } else {
+      if (ch === '"') { inQuotes = true; i++; continue; }
+      if (ch === ',') { row.push(cell); cell=''; i++; continue; }
+      if (ch === '\r') { i++; continue; }
+      if (ch === '\n') { row.push(cell); rows.push(row); row=[]; cell=''; i++; continue; }
+      cell += ch; i++; continue;
+    }
+  }
+  if (cell.length > 0 || row.length > 0) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+function parseFecha(str) {
+  if (!str) return null;
+  str = str.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const parts = str.replace(/"/g,'').split('/');
+  if (parts.length === 3) {
+    let [d,m,y] = parts;
+    if (y.length === 2) y = '20'+y;
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  return str.slice(0,10);
+}
+
+function findRow(rows, target) {
+  for (const row of rows) {
+    if (parseFecha(row[0]) === target) return row;
+  }
+  return null;
+}
+
+function extractData(row) {
+  const provincias = [], nacionales = [];
+  for (const k of PROV_KEYS) {
+    const v = row[SHEET_COLS[k]];
+    if (v && v.trim()) provincias.push({ key:k, label:LABELS[k], texto:v.trim() });
+  }
+  for (const k of NAC_KEYS) {
+    const v = row[SHEET_COLS[k]];
+    if (v && v.trim()) nacionales.push({ key:k, label:LABELS[k], texto:v.trim() });
+  }
+  return { provincias, nacionales };
+}
+
+async function procesarConClaude(apiKey, label, textoCompleto, esNacionalGeneral) {
+  let prompt;
+  if (esNacionalGeneral) {
+    prompt = `Recibís el texto de novedades legislativas/fiscales nacionales tal como vienen en un mail informativo. El texto contiene VARIAS normas de distintos temas (impositivo, laboral, seguridad social, aduanero, societario, etc.), separadas habitualmente por viñetas (•) o saltos de párrafo.
+
+Tu tarea es identificar cada norma individual, clasificarla en un área temática (ej: "IVA", "Impuesto a las Ganancias", "Bienes Personales", "Impuestos Internos", "Procedimiento Tributario", "Seguridad Social", "Aduanero", "Convenio Multilateral", u otra etiqueta breve y precisa según corresponda) y para cada una extraer:
+- "tema": la etiqueta temática breve
+- "norma": el nombre/identificación de la norma tal como aparece (ej: "RESOLUCIÓN GENERAL 5863/2026 (A.F.I.P.)")
+- "resumen": un resumen FIEL y OBJETIVO del contenido, basado solo en el texto provisto, SIN agregar interpretación ni valoración de impacto. Entre 20 y 45 palabras, tono informativo neutro.
+
+Texto completo:
+${textoCompleto}
+
+Respondé SOLO en JSON sin backticks ni texto adicional:
+{
+  "normas": [
+    { "tema": "...", "norma": "...", "resumen": "..." }
+  ]
+}`;
+  } else {
+    prompt = `Recibís el texto de novedades legislativas/fiscales tal como vienen en un mail informativo para el área "${label}". El texto puede contener UNA O VARIAS normas distintas, separadas habitualmente por viñetas (•) o saltos de párrafo.
+
+Tu tarea es identificar cada norma individual y para cada una extraer:
+- "norma": el nombre/identificación de la norma tal como aparece (ej: "RESOLUCIÓN GENERAL 3/2025 (D.G.R.)", "DECRETO 47/2025", "CCT 327/2000", etc. Si no tiene número identificable, usar el título/encabezado de la viñeta, ej: "Estaciones de servicio - Base promedio...")
+- "resumen": un resumen FIEL y OBJETIVO del contenido de esa norma, basado solo en el texto provisto, SIN agregar interpretación, opinión, ni valoración de impacto. Resumen entre 20 y 45 palabras, en tono informativo neutro (no usar exclamaciones ni lenguaje promocional).
+
+Texto completo:
+${textoCompleto}
+
+Respondé SOLO en JSON sin backticks ni texto adicional:
+{
+  "normas": [
+    { "norma": "...", "resumen": "..." }
+  ]
+}
+
+Si hay una sola norma, el array tiene un solo elemento. Si hay varias, listalas todas en el orden en que aparecen.`;
+  }
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1500, messages:[{role:'user',content:prompt}] })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error('Error API: '+(e.error?.message||resp.status)); }
+  const data = await resp.json();
+  const text = data.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim();
+  return JSON.parse(text);
+}
+
+function formatFecha(f) {
+  const [y,m,d] = f.split('-');
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `${parseInt(d)} de ${meses[parseInt(m)]} de ${y}`;
+}
+
+function getLines(ctx, text, maxWidth, font) {
+  ctx.font = font;
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  for (const w of words) {
+    const t = cur ? cur+' '+w : w;
+    if (ctx.measureText(t).width > maxWidth && cur) { lines.push(cur); cur = w; }
+    else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineH, color, font) {
+  const lines = getLines(ctx, text, maxWidth, font);
+  ctx.font = font; ctx.fillStyle = color;
+  lines.forEach((l,i) => ctx.fillText(l, x, y+i*lineH));
+  return lines.length;
+}
+
+function drawBanner(canvas, normas, label, tipo, fechaStr, logoCompleto, logoIsotipo, agrupado) {
+  const ctx = canvas.getContext('2d');
+  const W = 1080;
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = W;
+  const tctx = tempCanvas.getContext('2d');
+
+  const normaFont = 'bold 23px "Montserrat","Inter",sans-serif';
+  const resFont = '20px "Montserrat","Inter",sans-serif';
+  const temaFont = 'bold 17px "Montserrat","Inter",sans-serif';
+
+  let estH = 200;
+
+  // Agrupar por tema si corresponde
+  let grupos = [];
+  if (agrupado) {
+    const map = {};
+    for (const n of normas) {
+      const tema = n.tema || 'General';
+      if (!map[tema]) map[tema] = [];
+      map[tema].push(n);
+    }
+    grupos = Object.keys(map).map(tema => ({ tema, items: map[tema] }));
+  } else {
+    grupos = [{ tema: null, items: normas }];
+  }
+
+  for (const g of grupos) {
+    if (g.tema) estH += 40;
+    for (const n of g.items) {
+      const normaLines = getLines(tctx, n.norma, W-140, normaFont);
+      const resLines = getLines(tctx, n.resumen, W-140, resFont);
+      estH += normaLines.length*30 + resLines.length*27 + 38;
+    }
+  }
+  estH += 150;
+
+  const H = Math.max(estH, 1080);
+  canvas.width = W; canvas.height = H;
+
+  ctx.fillStyle = C_BG;
+  ctx.fillRect(0,0,W,H);
+
+  if (logoIsotipo && logoIsotipo.complete && logoIsotipo.naturalWidth > 0) {
+    const wmSize = Math.min(900, H*0.7);
+    const wmW = logoIsotipo.naturalWidth * (wmSize / logoIsotipo.naturalHeight);
+    ctx.save();
+    ctx.globalAlpha = 0.035;
+    ctx.drawImage(logoIsotipo, (W-wmW)/2, (H-wmSize)/2, wmW, wmSize);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0,0,W,130);
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 21px "Montserrat","Inter",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(formatFecha(fechaStr).toUpperCase(), 70, 68);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = C_BEIGE;
+  ctx.font = 'bold 14px "Montserrat","Inter",sans-serif';
+  ctx.fillText(tipo === 'provincial' ? 'NOVEDADES PROVINCIALES' : 'NOVEDADES NACIONALES', W-70, 68);
+  ctx.strokeStyle = C_BEIGE;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(60,130); ctx.lineTo(W-60,130); ctx.stroke();
+
+  ctx.textAlign = 'left';
+  let y = 195;
+
+  const labelFont = 'bold 68px Georgia,"Times New Roman",serif';
+  const labelLines = getLines(ctx, label.toUpperCase(), W-120, labelFont);
+  wrapText(ctx, label.toUpperCase(), 60, y, W-120, 78, C_DARK, labelFont);
+  y += labelLines.length * 78 + 14;
+
+  ctx.font = '22px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = C_MID;
+  ctx.fillText(SUBTITULO_FIJO, 60, y);
+  y += 38;
+
+  ctx.strokeStyle = '#D5C9BE';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
+  y += 36;
+
+  for (const g of grupos) {
+    if (g.tema) {
+      ctx.fillStyle = C_BEIGE;
+      ctx.font = temaFont;
+      ctx.fillText(g.tema.toUpperCase(), 60, y);
+      y += 14;
+      ctx.strokeStyle = '#E5DCD2';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
+      y += 26;
+    }
+    for (const n of g.items) {
+      ctx.fillStyle = C_DARK;
+      ctx.beginPath(); ctx.roundRect(60, y+4, 6, 20, 3); ctx.fill();
+
+      const nLines = wrapText(ctx, n.norma, 82, y+20, W-142, 30, C_DARK, normaFont);
+      y += nLines * 30 + 8;
+
+      const rLines = wrapText(ctx, n.resumen, 82, y, W-142, 27, C_GRAY, resFont);
+      y += rLines * 27 + 30;
+    }
+  }
+
+  const footerH = 130;
+  const footerY = H - footerH;
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0, footerY, W, footerH);
+
+  if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
+    const logoH = 56;
+    const logoW = logoCompleto.naturalWidth * (logoH / logoCompleto.naturalHeight);
+    ctx.drawImage(logoCompleto, (W-logoW)/2, footerY+12, logoW, logoH);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '16px "Montserrat","Inter",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Consultanos para más información', W/2, H-16);
+  ctx.textAlign = 'left';
+}
+
+let logoCompleto = null;
+let logoIsotipo  = null;
+
+function preloadImgs() {
+  const load = src => new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+  return Promise.all([
+    load('Logo_Estudio_Giraud-02.png'),
+    load('Logo_Estudio_Giraud-04.png')
+  ]).then(([c, i]) => { logoCompleto = c; logoIsotipo = i; });
+}
+
+function crearCard(label, key, fecha, grid) {
+  const card = document.createElement('div');
+  card.className = 'banner-card';
+  card.innerHTML = `<h3>${label}</h3>`;
+  const canvas = document.createElement('canvas');
+  canvas.style.width = '100%';
+  card.appendChild(canvas);
+  const btnRow = document.createElement('div');
+  btnRow.style.textAlign = 'right';
+  const btn = document.createElement('button');
+  btn.className = 'btn-dl';
+  btn.textContent = '⬇ Descargar';
+  btn.onclick = () => {
+    const a = document.createElement('a');
+    a.download = `giraud_${fecha}_${key}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  btnRow.appendChild(btn);
+  card.appendChild(btnRow);
+  grid.appendChild(card);
+  return canvas;
+}
+
+async function generarTodos() {
+  const sheetId = document.getElementById('sheet-id').value.trim();
+  const apiKey  = document.getElementById('api-key').value.trim();
+  const fecha   = document.getElementById('fecha').value;
+  if (!sheetId || !apiKey || !fecha) { setStatus('error','Completá todos los campos.'); return; }
+  localStorage.setItem('giraud_api_key', apiKey);
+  document.getElementById('btn-generar').disabled = true;
+  document.getElementById('resultado').innerHTML = '';
+
+  try {
+    setStatus('loading','Cargando logos...');
+    await preloadImgs();
+
+    setStatus('loading','Leyendo la planilla...');
+    const rows = await fetchSheet(sheetId);
+    const row  = findRow(rows, fecha);
+    if (!row) { setStatus('error',`No hay datos para el ${formatFecha(fecha)}.`); return; }
+
+    const { provincias, nacionales } = extractData(row);
+    if (!provincias.length && !nacionales.length) { setStatus('error','No hay novedades para esa fecha.'); return; }
+
+    const todos  = [...provincias, ...nacionales];
+    const total  = todos.length;
+    const grid   = document.createElement('div');
+    grid.className = 'banners-grid';
+    document.getElementById('resultado').appendChild(grid);
+
+    for (let i = 0; i < todos.length; i++) {
+      const item = todos[i];
+      const tipo = i < provincias.length ? 'provincial' : 'nacional';
+      const esNacionalGeneral = item.key === 'nacional';
+      setStatus('loading', `Procesando ${i+1} de ${total}: ${item.label}...`);
+      try {
+        const resultado = await procesarConClaude(apiKey, item.label, item.texto, esNacionalGeneral);
+        const canvas = crearCard(item.label, item.key, fecha, grid);
+        drawBanner(canvas, resultado.normas, item.label, tipo, fecha, logoCompleto, logoIsotipo, esNacionalGeneral);
+      } catch(e) {
+        const card = document.createElement('div');
+        card.className = 'banner-card';
+        card.innerHTML = `<h3>${item.label}</h3><p style="color:#a33;font-size:0.8rem;padding:0.5rem">Error: ${e.message}</p>`;
+        grid.appendChild(card);
+      }
+    }
+    hideStatus();
+  } catch(e) {
+    setStatus('error', e.message);
+  } finally {
+    document.getElementById('btn-generar').disabled = false;
+  }
+}
+</script>
+</body>
+</html>
