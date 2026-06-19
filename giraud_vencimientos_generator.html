@@ -168,12 +168,23 @@ Importante: agrupá TODAS las obligaciones que caen en el mismo día de la seman
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
-    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:8000, messages:[{role:'user',content:prompt}] })
+    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:16000, messages:[{role:'user',content:prompt}] })
   });
   if (!resp.ok) { const e = await resp.json(); throw new Error('Error API: '+(e.error?.message||resp.status)); }
   const data = await resp.json();
-  const text = data.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim();
-  return JSON.parse(text);
+  let text = data.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim();
+
+  // Limpieza de caracteres invisibles/especiales que pueden romper el JSON
+  text = text.replace(/[\u200B\u200C\u200D\uFEFF]/g, ''); // zero-width spaces
+  text = text.replace(/,(\s*[\]}])/g, '$1'); // comas finales antes de ] o }
+
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('JSON inválido recibido de Claude:', text.slice(0, 2000));
+    console.error('Largo total del texto:', text.length, '— stop_reason:', data.stop_reason);
+    throw new Error(`No se pudo interpretar la respuesta (${err.message}). Esto suele pasar si el boletín es muy largo. Mirá la consola (F12) para el detalle, o probá pegar el mail en dos partes.`);
+  }
 }
 
 function buildContentBlocks(ctx, jurisdicciones, scale) {
