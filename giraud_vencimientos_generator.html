@@ -242,46 +242,47 @@ function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, l
     ctx.restore();
   }
 
+  const topBarH = Math.round(130 * Math.max(scale, 0.6));
   ctx.fillStyle = C_DARK;
-  ctx.fillRect(0,0,W,130);
+  ctx.fillRect(0,0,W,topBarH);
   ctx.fillStyle = 'white';
-  ctx.font = 'bold 21px "Montserrat","Inter",sans-serif';
+  ctx.font = `bold ${Math.round(21*Math.max(scale,0.8))}px "Montserrat","Inter",sans-serif`;
   ctx.textAlign = 'left';
-  ctx.fillText('BOLETÍN SEMANAL DE VENCIMIENTOS', 70, 68);
+  ctx.fillText('BOLETÍN SEMANAL DE VENCIMIENTOS', 70, topBarH*0.52);
   ctx.textAlign = 'right';
   ctx.fillStyle = C_BEIGE;
-  ctx.font = 'bold 14px "Montserrat","Inter",sans-serif';
-  ctx.fillText(mesAno.toUpperCase(), W-70, 68);
+  ctx.font = `bold ${Math.round(14*Math.max(scale,0.8))}px "Montserrat","Inter",sans-serif`;
+  ctx.fillText(mesAno.toUpperCase(), W-70, topBarH*0.52);
   ctx.strokeStyle = C_BEIGE;
   ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(60,130); ctx.lineTo(W-60,130); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,topBarH); ctx.lineTo(W-60,topBarH); ctx.stroke();
 
   ctx.textAlign = 'left';
-  let y = 195;
+  let y = topBarH + 65*scale;
 
-  const labelSize = Math.round((isFirst ? 64 : 50) * Math.max(scale, 0.75));
+  const labelSize = Math.round((isFirst ? 64 : 50) * Math.max(scale, 0.7));
   const labelFont = `bold ${labelSize}px Georgia,"Times New Roman",serif`;
   const labelText = `${diaSemana.toUpperCase()} ${diaNumero}`;
   const labelLines = getLines(ctx, labelText, W-120, labelFont);
   wrapText(ctx, labelText, 60, y, W-120, labelSize*1.15, C_DARK, labelFont);
-  y += labelLines.length * (labelSize*1.15) + 10;
+  y += labelLines.length * (labelSize*1.15) + 8*scale;
 
   if (isFirst) {
     ctx.font = `${Math.round(22*scale)}px "Montserrat","Inter",sans-serif`;
     ctx.fillStyle = C_MID;
     ctx.fillText('Vencimientos del día', 60, y);
-    y += 36*scale;
+    y += 30*scale;
   } else {
     ctx.font = `italic ${Math.round(20*scale)}px "Montserrat","Inter",sans-serif`;
     ctx.fillStyle = C_MID;
     ctx.fillText('Continuación...', 60, y);
-    y += 34*scale;
+    y += 28*scale;
   }
 
   ctx.strokeStyle = '#D5C9BE';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
-  y += 30*scale;
+  y += 22*scale;
 
   const jurFont = `bold ${Math.round(26*scale)}px Georgia,"Times New Roman",serif`;
   const catFont = `bold ${Math.round(17*scale)}px "Montserrat","Inter",sans-serif`;
@@ -293,23 +294,23 @@ function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, l
       ctx.fillStyle = C_DARK;
       ctx.font = jurFont;
       ctx.fillText(b.text, 60, y);
-      y += 38*scale;
+      y += 32*scale;
     } else if (b.type === 'categoria') {
       ctx.fillStyle = C_BEIGE;
       ctx.font = catFont;
       ctx.fillText(b.text.toUpperCase(), 60, y);
-      y += 12*scale;
+      y += 10*scale;
       ctx.strokeStyle = '#E5DCD2';
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
-      y += 24*scale;
+      y += 20*scale;
     } else {
       ctx.fillStyle = C_MID;
       ctx.beginPath(); ctx.roundRect(60, y+3*scale, 5, 16*scale, 2); ctx.fill();
-      const cLines = wrapText(ctx, b.cuit, 80, y+17*scale, W-150, 24*scale, C_DARK, cuitFont);
-      y += cLines * 24*scale + 4*scale;
-      const dLines = wrapText(ctx, b.descripcion, 80, y, W-150, 23*scale, C_GRAY, descFont);
-      y += dLines * 23*scale + 22*scale;
+      const cLines = wrapText(ctx, b.cuit, 80, y+17*scale, W-150, 23*scale, C_DARK, cuitFont);
+      y += cLines * 23*scale + 3*scale;
+      const dLines = wrapText(ctx, b.descripcion, 80, y, W-150, 22*scale, C_GRAY, descFont);
+      y += dLines * 22*scale + 16*scale;
     }
   }
 
@@ -322,16 +323,16 @@ function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, l
   }
 
   if (isLast) {
-    const footerH = 300;
+    const footerH = Math.round(300 * Math.max(scale, 0.55));
     const footerY = H - footerH;
     ctx.fillStyle = C_DARK;
     ctx.fillRect(0, footerY, W, footerH);
 
-    let logoBottom = footerY + 40;
+    let logoBottom = footerY + 40*scale;
     if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
-      const logoW = 420;
+      const logoW = Math.round(420 * Math.max(scale, 0.55));
       const logoH = logoCompleto.naturalHeight * (logoW / logoCompleto.naturalWidth);
-      const logoTop = footerY + 35;
+      const logoTop = footerY + 30*scale;
       ctx.drawImage(logoCompleto, (W-logoW)/2, logoTop, logoW, logoH);
       logoBottom = logoTop + logoH;
     }
@@ -403,19 +404,25 @@ function drawCoverSlide(rangoFechas, logoCompleto, logoIsotipo) {
 function tryPaginateAtScale(tctx, dia, scale) {
   const blocks = buildContentBlocks(tctx, dia.jurisdicciones, scale);
 
-  const HEADER_H = (195 + 36 + 30) * Math.max(scale, 0.85); // aproximación conservadora
-  const FOOTER_RESERVE = 80 * scale;
-  const CONTENT_AREA_FIRST = 1080 - HEADER_H - FOOTER_RESERVE - 20;
-  const labelSizeNext = Math.round(50 * Math.max(scale, 0.75));
-  const HEADER_NEXT_H = 130 + 10 + labelSizeNext*1.15 + 34*scale + 30*scale;
-  const CONTENT_AREA_NEXT = 1080 - HEADER_NEXT_H - FOOTER_RESERVE - 20;
+  // Debe coincidir con la geometría real usada en drawSlide()
+  const topBarH = Math.round(130 * Math.max(scale, 0.6));
+  const labelSizeFirst = Math.round(64 * Math.max(scale, 0.7));
+  const labelSizeNext  = Math.round(50 * Math.max(scale, 0.7));
+
+  const HEADER_FIRST_H = topBarH + 65*scale + labelSizeFirst*1.15 + 8*scale + 30*scale + 22*scale;
+  const HEADER_NEXT_H  = topBarH + 65*scale + labelSizeNext*1.15 + 8*scale + 28*scale + 22*scale;
+
+  const FOOTER_RESERVE = 50; // espacio para "continúa..." al pie, no escala (texto fijo)
+  const CONTENT_AREA_FIRST = 1080 - HEADER_FIRST_H - FOOTER_RESERVE - 15;
+  const CONTENT_AREA_NEXT  = 1080 - HEADER_NEXT_H  - FOOTER_RESERVE - 15;
   const SAFE_CONTENT_AREA = Math.min(CONTENT_AREA_FIRST, CONTENT_AREA_NEXT);
-  const CONTENT_AREA_LAST_EXTRA_FOOTER = 300;
+
+  const footerH = Math.round(300 * Math.max(scale, 0.55));
 
   let pages = paginateBlocks(blocks, SAFE_CONTENT_AREA);
 
   const lastPageH = pages[pages.length-1].reduce((acc,b)=>acc+b.height,0);
-  const availableWithFooter = SAFE_CONTENT_AREA - (CONTENT_AREA_LAST_EXTRA_FOOTER - FOOTER_RESERVE);
+  const availableWithFooter = SAFE_CONTENT_AREA - (footerH - FOOTER_RESERVE);
   if (lastPageH > availableWithFooter && pages[pages.length-1].length > 0) {
     pages.push([]);
   }
@@ -429,7 +436,7 @@ function drawDayBanner(dia, mesAno, logoCompleto, logoIsotipo) {
   const tctx = tempCanvas.getContext('2d');
 
   // Probamos escalas decrecientes buscando que entre en máximo 2 páginas.
-  const SCALES_TO_TRY = [1, 0.9, 0.8, 0.72];
+  const SCALES_TO_TRY = [1, 0.9, 0.8, 0.7, 0.62, 0.55];
   let pages = null;
   let usedScale = 1;
   for (const scale of SCALES_TO_TRY) {
