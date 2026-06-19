@@ -176,23 +176,24 @@ Importante: agrupá TODAS las obligaciones que caen en el mismo día de la seman
   return JSON.parse(text);
 }
 
-function buildContentBlocks(ctx, jurisdicciones) {
+function buildContentBlocks(ctx, jurisdicciones, scale) {
+  scale = scale || 1;
   const W = 1080;
-  const jurFont = 'bold 26px Georgia,"Times New Roman",serif';
-  const catFont = 'bold 17px "Montserrat","Inter",sans-serif';
-  const cuitFont = 'bold 19px "Montserrat","Inter",sans-serif';
-  const descFont = '18px "Montserrat","Inter",sans-serif';
+  const jurFont = `bold ${Math.round(26*scale)}px Georgia,"Times New Roman",serif`;
+  const catFont = `bold ${Math.round(17*scale)}px "Montserrat","Inter",sans-serif`;
+  const cuitFont = `bold ${Math.round(19*scale)}px "Montserrat","Inter",sans-serif`;
+  const descFont = `${Math.round(18*scale)}px "Montserrat","Inter",sans-serif`;
 
   const blocks = [];
   for (const jur of jurisdicciones) {
-    blocks.push({ type:'jurisdiccion', text: jur.nombre, height: 50 });
+    blocks.push({ type:'jurisdiccion', text: jur.nombre, height: 50*scale });
     for (const cat of jur.categorias) {
-      blocks.push({ type:'categoria', text: cat.nombre, height: 36 });
+      blocks.push({ type:'categoria', text: cat.nombre, height: 36*scale });
       for (const ob of cat.obligaciones) {
         const cuitText = `CUIT ${ob.cuit}`;
         const cLines = getLines(ctx, cuitText, W-150, cuitFont);
         const dLines = getLines(ctx, ob.descripcion, W-150, descFont);
-        const h = cLines.length*24 + dLines.length*23 + 22;
+        const h = cLines.length*24*scale + dLines.length*23*scale + 22*scale;
         blocks.push({ type:'obligacion', cuit: cuitText, descripcion: ob.descripcion, cLines: cLines.length, dLines: dLines.length, height: h });
       }
     }
@@ -221,7 +222,8 @@ function formatFechaCorta(diaSemana, diaNumero) {
   return `${diaSemana} ${diaNumero}`;
 }
 
-function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, logoIsotipo, pageNum, totalPages) {
+function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, logoIsotipo, pageNum, totalPages, scale) {
+  scale = scale || 1;
   const ctx = canvas.getContext('2d');
   const W = 1080, H = 1080;
   canvas.width = W; canvas.height = H;
@@ -257,7 +259,7 @@ function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, l
   ctx.textAlign = 'left';
   let y = 195;
 
-  const labelSize = isFirst ? 64 : 50;
+  const labelSize = Math.round((isFirst ? 64 : 50) * Math.max(scale, 0.75));
   const labelFont = `bold ${labelSize}px Georgia,"Times New Roman",serif`;
   const labelText = `${diaSemana.toUpperCase()} ${diaNumero}`;
   const labelLines = getLines(ctx, labelText, W-120, labelFont);
@@ -265,49 +267,49 @@ function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, l
   y += labelLines.length * (labelSize*1.15) + 10;
 
   if (isFirst) {
-    ctx.font = '22px "Montserrat","Inter",sans-serif';
+    ctx.font = `${Math.round(22*scale)}px "Montserrat","Inter",sans-serif`;
     ctx.fillStyle = C_MID;
     ctx.fillText('Vencimientos del día', 60, y);
-    y += 36;
+    y += 36*scale;
   } else {
-    ctx.font = 'italic 20px "Montserrat","Inter",sans-serif';
+    ctx.font = `italic ${Math.round(20*scale)}px "Montserrat","Inter",sans-serif`;
     ctx.fillStyle = C_MID;
     ctx.fillText('Continuación...', 60, y);
-    y += 34;
+    y += 34*scale;
   }
 
   ctx.strokeStyle = '#D5C9BE';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
-  y += 30;
+  y += 30*scale;
 
-  const jurFont = 'bold 26px Georgia,"Times New Roman",serif';
-  const catFont = 'bold 17px "Montserrat","Inter",sans-serif';
-  const cuitFont = 'bold 19px "Montserrat","Inter",sans-serif';
-  const descFont = '18px "Montserrat","Inter",sans-serif';
+  const jurFont = `bold ${Math.round(26*scale)}px Georgia,"Times New Roman",serif`;
+  const catFont = `bold ${Math.round(17*scale)}px "Montserrat","Inter",sans-serif`;
+  const cuitFont = `bold ${Math.round(19*scale)}px "Montserrat","Inter",sans-serif`;
+  const descFont = `${Math.round(18*scale)}px "Montserrat","Inter",sans-serif`;
 
   for (const b of blocks) {
     if (b.type === 'jurisdiccion') {
       ctx.fillStyle = C_DARK;
       ctx.font = jurFont;
       ctx.fillText(b.text, 60, y);
-      y += 38;
+      y += 38*scale;
     } else if (b.type === 'categoria') {
       ctx.fillStyle = C_BEIGE;
       ctx.font = catFont;
       ctx.fillText(b.text.toUpperCase(), 60, y);
-      y += 12;
+      y += 12*scale;
       ctx.strokeStyle = '#E5DCD2';
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
-      y += 24;
+      y += 24*scale;
     } else {
       ctx.fillStyle = C_MID;
-      ctx.beginPath(); ctx.roundRect(60, y+3, 5, 16, 2); ctx.fill();
-      const cLines = wrapText(ctx, b.cuit, 80, y+17, W-150, 24, C_DARK, cuitFont);
-      y += cLines * 24 + 4;
-      const dLines = wrapText(ctx, b.descripcion, 80, y, W-150, 23, C_GRAY, descFont);
-      y += dLines * 23 + 22;
+      ctx.beginPath(); ctx.roundRect(60, y+3*scale, 5, 16*scale, 2); ctx.fill();
+      const cLines = wrapText(ctx, b.cuit, 80, y+17*scale, W-150, 24*scale, C_DARK, cuitFont);
+      y += cLines * 24*scale + 4*scale;
+      const dLines = wrapText(ctx, b.descripcion, 80, y, W-150, 23*scale, C_GRAY, descFont);
+      y += dLines * 23*scale + 22*scale;
     }
   }
 
@@ -398,18 +400,15 @@ function drawCoverSlide(rangoFechas, logoCompleto, logoIsotipo) {
   return canvas;
 }
 
-function drawDayBanner(dia, mesAno, logoCompleto, logoIsotipo) {
-  const W = 1080;
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = W;
-  const tctx = tempCanvas.getContext('2d');
+function tryPaginateAtScale(tctx, dia, scale) {
+  const blocks = buildContentBlocks(tctx, dia.jurisdicciones, scale);
 
-  const blocks = buildContentBlocks(tctx, dia.jurisdicciones);
-
-  const HEADER_H = 195 + 36 + 30;
-  const FOOTER_RESERVE = 80;
+  const HEADER_H = (195 + 36 + 30) * Math.max(scale, 0.85); // aproximación conservadora
+  const FOOTER_RESERVE = 80 * scale;
   const CONTENT_AREA_FIRST = 1080 - HEADER_H - FOOTER_RESERVE - 20;
-  const CONTENT_AREA_NEXT = 1080 - (130+10+50*1.15+34+30) - FOOTER_RESERVE - 20;
+  const labelSizeNext = Math.round(50 * Math.max(scale, 0.75));
+  const HEADER_NEXT_H = 130 + 10 + labelSizeNext*1.15 + 34*scale + 30*scale;
+  const CONTENT_AREA_NEXT = 1080 - HEADER_NEXT_H - FOOTER_RESERVE - 20;
   const SAFE_CONTENT_AREA = Math.min(CONTENT_AREA_FIRST, CONTENT_AREA_NEXT);
   const CONTENT_AREA_LAST_EXTRA_FOOTER = 300;
 
@@ -420,10 +419,30 @@ function drawDayBanner(dia, mesAno, logoCompleto, logoIsotipo) {
   if (lastPageH > availableWithFooter && pages[pages.length-1].length > 0) {
     pages.push([]);
   }
+  return pages;
+}
+
+function drawDayBanner(dia, mesAno, logoCompleto, logoIsotipo) {
+  const W = 1080;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = W;
+  const tctx = tempCanvas.getContext('2d');
+
+  // Probamos escalas decrecientes buscando que entre en máximo 2 páginas.
+  const SCALES_TO_TRY = [1, 0.9, 0.8, 0.72];
+  let pages = null;
+  let usedScale = 1;
+  for (const scale of SCALES_TO_TRY) {
+    const candidate = tryPaginateAtScale(tctx, dia, scale);
+    pages = candidate;
+    usedScale = scale;
+    if (candidate.length <= 2) break;
+  }
+  // Si ni con la escala más chica entra en 2, nos quedamos con esa igual (prioriza no perder info)
 
   return pages.map((pageBlocks, idx) => {
     const c = document.createElement('canvas');
-    drawSlide(c, pageBlocks, dia.diaSemana, dia.diaNumero, mesAno, logoCompleto, logoIsotipo, idx+1, pages.length);
+    drawSlide(c, pageBlocks, dia.diaSemana, dia.diaNumero, mesAno, logoCompleto, logoIsotipo, idx+1, pages.length, usedScale);
     return c;
   });
 }
@@ -535,12 +554,14 @@ async function generarTodos() {
     const coverCanvas = drawCoverSlide(rango, logoCompleto, logoIsotipo);
     crearCardMultiple('Portada', [coverCanvas], grid);
 
+    const todasLasSlides = []; // referencia: [{dia, canvases}]
     for (let i = 0; i < resultado.dias.length; i++) {
       const dia = resultado.dias[i];
       setStatus('loading', `Generando banner ${i+1} de ${resultado.dias.length}: ${dia.diaSemana} ${dia.diaNumero}...`);
       try {
         const canvases = drawDayBanner(dia, mesAno, logoCompleto, logoIsotipo);
         crearCardMultiple(`${dia.diaSemana} ${dia.diaNumero}`, canvases, grid);
+        todasLasSlides.push({ dia: `${dia.diaSemana} ${dia.diaNumero}`, count: canvases.length });
       } catch(e) {
         const card = document.createElement('div');
         card.className = 'banner-card';
@@ -548,6 +569,16 @@ async function generarTodos() {
         grid.appendChild(card);
       }
     }
+
+    const totalSlides = 1 + todasLasSlides.reduce((acc,d)=>acc+d.count, 0); // +1 portada
+    if (totalSlides > 10) {
+      const detalle = todasLasSlides.map(d => `${d.dia}: ${d.count}`).join(' · ');
+      const warnDiv = document.createElement('div');
+      warnDiv.style.cssText = 'background:#fdf0f0;color:#a33;padding:0.9rem 1.1rem;border-radius:8px;margin-bottom:1.2rem;font-size:0.85rem;line-height:1.5';
+      warnDiv.innerHTML = `<strong>⚠ Atención:</strong> se generaron ${totalSlides} slides en total (portada + días), y Instagram permite máximo 10 por carrusel. Vas a tener que armar 2 publicaciones, o sacar manualmente algún día menos relevante.<br><span style="opacity:0.8">Detalle: ${detalle}</span>`;
+      document.getElementById('resultado').insertBefore(warnDiv, grid);
+    }
+
     hideStatus();
   } catch(e) {
     setStatus('error', e.message);
