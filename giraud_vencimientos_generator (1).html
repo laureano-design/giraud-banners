@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Banners — Vencimientos Semanales — Estudio Giraud</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat','Inter',sans-serif; background: #f0efe9; min-height: 100vh; padding: 2rem; color: #2c2c2c; }
+.app-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.app-title { font-size: 1.1rem; font-weight: 700; color: #3D4F6B; }
+.app-subtitle { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+.panel { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e0d8; }
+.panel-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #3D4F6B; margin-bottom: 1rem; }
+.field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.field:last-child { margin-bottom: 0; }
+.field label { font-size: 0.78rem; color: #555; font-weight: 600; }
+input[type="text"], input[type="date"], input[type="password"] { border: 1px solid #d5d3cb; border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; background: white; color: #2c2c2c; width: 100%; }
+textarea { border: 1px solid #d5d3cb; border-radius: 8px; padding: 0.8rem; font-size: 0.85rem; font-family: 'Courier New', monospace; background: white; color: #2c2c2c; width: 100%; min-height: 280px; resize: vertical; line-height: 1.5; }
+input:focus, textarea:focus { outline: 2px solid #3D4F6B; outline-offset: 1px; border-color: transparent; }
+.row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+.btn { padding: 0.65rem 1.6rem; border-radius: 8px; border: none; font-size: 0.88rem; font-family: inherit; font-weight: 700; cursor: pointer; letter-spacing: 0.02em; transition: all 0.15s; }
+.btn-primary { background: #3D4F6B; color: white; }
+.btn-primary:hover { background: #2e3d55; }
+.btn-primary:disabled { background: #a0aab8; cursor: not-allowed; }
+.btn-dl { background: #3D4F6B; color: white; font-size: 0.82rem; padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; }
+.btn-dl:hover { background: #2e3d55; }
+.tip { font-size: 0.74rem; color: #888; margin-top: 0.3rem; line-height: 1.5; }
+.tip a { color: #3D4F6B; }
+.status-bar { display: none; align-items: center; gap: 0.7rem; padding: 0.8rem 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; }
+.status-bar.loading { display: flex; background: #eef2f8; color: #3D4F6B; }
+.status-bar.error { display: flex; background: #fdf0f0; color: #a33; }
+.spinner { width: 16px; height: 16px; border: 2px solid #3D4F6B; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.banners-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+.banner-card { background: white; border-radius: 12px; padding: 1rem; border: 1px solid #e2e0d8; }
+.banner-card h3 { font-size: 0.78rem; font-weight: 700; color: #3D4F6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.banner-card canvas { border-radius: 6px; display: block; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.nav-link { font-size: 0.78rem; color: #3D4F6B; text-decoration: none; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <img src="Logo_Estudio_Giraud-02.png" style="height:52px" onerror="this.style.display='none'" />
+  <div>
+    <div class="app-title">Estudio Giraud</div>
+    <div class="app-subtitle">Boletín Semanal de Vencimientos</div>
+  </div>
+  <a class="nav-link" href="giraud_banner_generator.html">← Volver al generador de novedades</a>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Configuración</div>
+  <div class="field">
+    <label>API Key de Anthropic</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." />
+    <div class="tip">Obtenela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys. Es la misma key del otro generador.</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Contenido del Mail (TRIVIA — Boletín Semanal)</div>
+  <div class="field">
+    <label>Pegá acá el cuerpo completo del mail</label>
+    <textarea id="mail-content" placeholder="Pegá el texto completo del boletín semanal de vencimientos..."></textarea>
+    <div class="tip">Copiá todo el contenido del mail (desde "Nacional" hasta el final) y pegalo tal cual.</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Generar Banners de la Semana</div>
+  <div class="row">
+    <button class="btn btn-primary" id="btn-generar" onclick="generarTodos()">Generar banners por día</button>
+  </div>
+</div>
+
+<div class="status-bar" id="status">
+  <div class="spinner" id="spinner"></div>
+  <span id="status-text"></span>
+</div>
+
+<div id="resultado"></div>
+
+<script>
+const C_DARK  = '#3D4F6B';
+const C_MID   = '#7A8FA6';
+const C_BEIGE = '#B8A99A';
+const C_BG    = '#F8F7F4';
+const C_TEXT  = '#2c2c2c';
+const C_GRAY  = '#444';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('giraud_api_key');
+  if (saved) document.getElementById('api-key').value = saved;
+});
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('status');
+  document.getElementById('status-text').textContent = msg;
+  document.getElementById('spinner').style.display = type === 'loading' ? 'block' : 'none';
+  bar.className = 'status-bar ' + type;
+}
+function hideStatus() { document.getElementById('status').className = 'status-bar'; }
+
+function getLines(ctx, text, maxWidth, font) {
+  ctx.font = font;
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  for (const w of words) {
+    const t = cur ? cur+' '+w : w;
+    if (ctx.measureText(t).width > maxWidth && cur) { lines.push(cur); cur = w; }
+    else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineH, color, font) {
+  const lines = getLines(ctx, text, maxWidth, font);
+  ctx.font = font; ctx.fillStyle = color;
+  lines.forEach((l,i) => ctx.fillText(l, x, y+i*lineH));
+  return lines.length;
+}
+
+async function procesarConClaude(apiKey, mailText) {
+  const prompt = `Recibís el texto de un boletín semanal de vencimientos impositivos (TRIVIA / Consejo Profesional). El texto está organizado jerárquicamente: Jurisdicción (ej: "Nacional", "Buenos Aires", "Convenio Multilateral") → Categoría (ej: "IVA", "Monotributo", "II.BB.") → Subcategoría (ej: "Declaración Jurada", "Pago Mensual") → líneas de obligación con rango de CUIT y descripción, seguidas de una fecha (día de la semana + número).
+
+Tu tarea es parsear TODO el contenido y devolver una estructura organizada por DÍA DE LA SEMANA, manteniendo dentro de cada día el agrupamiento por jurisdicción y categoría tal como aparece en el texto original.
+
+Para cada obligación extraé:
+- "cuit": el rango de terminación de CUIT (ej: "0 - 1 - 2 - 3")
+- "descripcion": la descripción de la obligación, fiel al texto original, SIN reescribir ni interpretar (podés acortar referencias muy largas a normas pero mantené el sentido exacto). Máximo 35 palabras.
+
+Texto completo del boletín:
+${mailText}
+
+Respondé SOLO en JSON sin backticks ni texto adicional, con esta estructura:
+{
+  "dias": [
+    {
+      "diaSemana": "Lunes",
+      "diaNumero": "22",
+      "jurisdicciones": [
+        {
+          "nombre": "Nacional",
+          "categorias": [
+            {
+              "nombre": "IVA — Declaración Jurada",
+              "obligaciones": [
+                { "cuit": "4 - 5", "descripcion": "Declaración Jurada. Régimen General. Mayo/2026" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Importante: agrupá TODAS las obligaciones que caen en el mismo día de la semana juntas, manteniendo el orden jerárquico jurisdicción > categoría > subcategoría tal como aparecen en el texto original. Solo incluí días que tengan al menos una obligación.`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:8000, messages:[{role:'user',content:prompt}] })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error('Error API: '+(e.error?.message||resp.status)); }
+  const data = await resp.json();
+  const text = data.content.map(b=>b.text||'').join('').trim().replace(/```json|```/g,'').trim();
+  return JSON.parse(text);
+}
+
+function buildContentBlocks(ctx, jurisdicciones, scale) {
+  scale = scale || 1;
+  const W = 1080;
+  const jurFont = `bold ${Math.round(26*scale)}px Georgia,"Times New Roman",serif`;
+  const catFont = `bold ${Math.round(17*scale)}px "Montserrat","Inter",sans-serif`;
+  const cuitFont = `bold ${Math.round(19*scale)}px "Montserrat","Inter",sans-serif`;
+  const descFont = `${Math.round(18*scale)}px "Montserrat","Inter",sans-serif`;
+
+  const blocks = [];
+  for (const jur of jurisdicciones) {
+    blocks.push({ type:'jurisdiccion', text: jur.nombre, height: 50*scale });
+    for (const cat of jur.categorias) {
+      blocks.push({ type:'categoria', text: cat.nombre, height: 36*scale });
+      for (const ob of cat.obligaciones) {
+        const cuitText = `CUIT ${ob.cuit}`;
+        const cLines = getLines(ctx, cuitText, W-150, cuitFont);
+        const dLines = getLines(ctx, ob.descripcion, W-150, descFont);
+        const h = cLines.length*24*scale + dLines.length*23*scale + 22*scale;
+        blocks.push({ type:'obligacion', cuit: cuitText, descripcion: ob.descripcion, cLines: cLines.length, dLines: dLines.length, height: h });
+      }
+    }
+  }
+  return blocks;
+}
+
+function paginateBlocks(blocks, contentAreaH) {
+  const pages = [];
+  let current = [];
+  let usedH = 0;
+  for (const b of blocks) {
+    if (usedH + b.height > contentAreaH && current.length > 0) {
+      pages.push(current);
+      current = [];
+      usedH = 0;
+    }
+    current.push(b);
+    usedH += b.height;
+  }
+  if (current.length > 0) pages.push(current);
+  return pages.length ? pages : [[]];
+}
+
+function formatFechaCorta(diaSemana, diaNumero) {
+  return `${diaSemana} ${diaNumero}`;
+}
+
+function drawSlide(canvas, blocks, diaSemana, diaNumero, mesAno, logoCompleto, logoIsotipo, pageNum, totalPages, scale) {
+  scale = scale || 1;
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
+  canvas.width = W; canvas.height = H;
+  const isLast = pageNum === totalPages;
+  const isFirst = pageNum === 1;
+
+  ctx.fillStyle = C_BG;
+  ctx.fillRect(0,0,W,H);
+
+  if (logoIsotipo && logoIsotipo.complete && logoIsotipo.naturalWidth > 0) {
+    const wmSize = 760;
+    const wmW = logoIsotipo.naturalWidth * (wmSize / logoIsotipo.naturalHeight);
+    ctx.save();
+    ctx.globalAlpha = 0.035;
+    ctx.drawImage(logoIsotipo, (W-wmW)/2, (H-wmSize)/2, wmW, wmSize);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0,0,W,130);
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 21px "Montserrat","Inter",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('BOLETÍN SEMANAL DE VENCIMIENTOS', 70, 68);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = C_BEIGE;
+  ctx.font = 'bold 14px "Montserrat","Inter",sans-serif';
+  ctx.fillText(mesAno.toUpperCase(), W-70, 68);
+  ctx.strokeStyle = C_BEIGE;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(60,130); ctx.lineTo(W-60,130); ctx.stroke();
+
+  ctx.textAlign = 'left';
+  let y = 195;
+
+  const labelSize = Math.round((isFirst ? 64 : 50) * Math.max(scale, 0.75));
+  const labelFont = `bold ${labelSize}px Georgia,"Times New Roman",serif`;
+  const labelText = `${diaSemana.toUpperCase()} ${diaNumero}`;
+  const labelLines = getLines(ctx, labelText, W-120, labelFont);
+  wrapText(ctx, labelText, 60, y, W-120, labelSize*1.15, C_DARK, labelFont);
+  y += labelLines.length * (labelSize*1.15) + 10;
+
+  if (isFirst) {
+    ctx.font = `${Math.round(22*scale)}px "Montserrat","Inter",sans-serif`;
+    ctx.fillStyle = C_MID;
+    ctx.fillText('Vencimientos del día', 60, y);
+    y += 36*scale;
+  } else {
+    ctx.font = `italic ${Math.round(20*scale)}px "Montserrat","Inter",sans-serif`;
+    ctx.fillStyle = C_MID;
+    ctx.fillText('Continuación...', 60, y);
+    y += 34*scale;
+  }
+
+  ctx.strokeStyle = '#D5C9BE';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
+  y += 30*scale;
+
+  const jurFont = `bold ${Math.round(26*scale)}px Georgia,"Times New Roman",serif`;
+  const catFont = `bold ${Math.round(17*scale)}px "Montserrat","Inter",sans-serif`;
+  const cuitFont = `bold ${Math.round(19*scale)}px "Montserrat","Inter",sans-serif`;
+  const descFont = `${Math.round(18*scale)}px "Montserrat","Inter",sans-serif`;
+
+  for (const b of blocks) {
+    if (b.type === 'jurisdiccion') {
+      ctx.fillStyle = C_DARK;
+      ctx.font = jurFont;
+      ctx.fillText(b.text, 60, y);
+      y += 38*scale;
+    } else if (b.type === 'categoria') {
+      ctx.fillStyle = C_BEIGE;
+      ctx.font = catFont;
+      ctx.fillText(b.text.toUpperCase(), 60, y);
+      y += 12*scale;
+      ctx.strokeStyle = '#E5DCD2';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke();
+      y += 24*scale;
+    } else {
+      ctx.fillStyle = C_MID;
+      ctx.beginPath(); ctx.roundRect(60, y+3*scale, 5, 16*scale, 2); ctx.fill();
+      const cLines = wrapText(ctx, b.cuit, 80, y+17*scale, W-150, 24*scale, C_DARK, cuitFont);
+      y += cLines * 24*scale + 4*scale;
+      const dLines = wrapText(ctx, b.descripcion, 80, y, W-150, 23*scale, C_GRAY, descFont);
+      y += dLines * 23*scale + 22*scale;
+    }
+  }
+
+  if (!isLast) {
+    ctx.fillStyle = C_MID;
+    ctx.font = 'italic 19px "Montserrat","Inter",sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('continúa...', W-70, H-40);
+    ctx.textAlign = 'left';
+  }
+
+  if (isLast) {
+    const footerH = 300;
+    const footerY = H - footerH;
+    ctx.fillStyle = C_DARK;
+    ctx.fillRect(0, footerY, W, footerH);
+
+    let logoBottom = footerY + 40;
+    if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
+      const logoW = 420;
+      const logoH = logoCompleto.naturalHeight * (logoW / logoCompleto.naturalWidth);
+      const logoTop = footerY + 35;
+      ctx.drawImage(logoCompleto, (W-logoW)/2, logoTop, logoW, logoH);
+      logoBottom = logoTop + logoH;
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '17px "Montserrat","Inter",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Consultanos para más información', W/2, logoBottom + 45);
+    ctx.textAlign = 'left';
+  }
+
+  if (totalPages > 1) {
+    ctx.fillStyle = C_MID;
+    ctx.font = '14px "Montserrat","Inter",sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${pageNum}/${totalPages}`, 70, H-30);
+  }
+}
+
+function drawCoverSlide(rangoFechas, logoCompleto, logoIsotipo) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
+  canvas.width = W; canvas.height = H;
+
+  ctx.fillStyle = C_BG;
+  ctx.fillRect(0,0,W,H);
+
+  if (logoIsotipo && logoIsotipo.complete && logoIsotipo.naturalWidth > 0) {
+    const wmSize = 760;
+    const wmW = logoIsotipo.naturalWidth * (wmSize / logoIsotipo.naturalHeight);
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.drawImage(logoIsotipo, (W-wmW)/2, (H-wmSize)/2, wmW, wmSize);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = C_DARK;
+  ctx.fillRect(0,0,W,18);
+  ctx.fillRect(0,H-18,W,18);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = C_BEIGE;
+  ctx.font = 'bold 16px "Montserrat","Inter",sans-serif';
+  ctx.fillText('ESTUDIO GIRAUD · CONTADORES PÚBLICOS', W/2, 110);
+
+  const tituloFont = 'bold 58px Georgia,"Times New Roman",serif';
+  const tituloText = 'Boletín semanal de vencimientos';
+  const tLines = getLines(ctx, tituloText, W-160, tituloFont);
+  const totalTextH = tLines.length * 70;
+  const startY = (H/2) - (totalTextH/2) - 40;
+  ctx.font = tituloFont;
+  ctx.fillStyle = C_DARK;
+  tLines.forEach((line, i) => ctx.fillText(line, W/2, startY + i*70));
+
+  ctx.font = '24px "Montserrat","Inter",sans-serif';
+  ctx.fillStyle = C_MID;
+  ctx.fillText(rangoFechas, W/2, startY + tLines.length*70 + 40);
+
+  if (logoCompleto && logoCompleto.complete && logoCompleto.naturalWidth > 0) {
+    const logoW = 380;
+    const logoH = logoCompleto.naturalHeight * (logoW / logoCompleto.naturalWidth);
+    ctx.drawImage(logoCompleto, (W-logoW)/2, H-220, logoW, logoH);
+  }
+
+  ctx.textAlign = 'left';
+  return canvas;
+}
+
+function tryPaginateAtScale(tctx, dia, scale) {
+  const blocks = buildContentBlocks(tctx, dia.jurisdicciones, scale);
+
+  const HEADER_H = (195 + 36 + 30) * Math.max(scale, 0.85); // aproximación conservadora
+  const FOOTER_RESERVE = 80 * scale;
+  const CONTENT_AREA_FIRST = 1080 - HEADER_H - FOOTER_RESERVE - 20;
+  const labelSizeNext = Math.round(50 * Math.max(scale, 0.75));
+  const HEADER_NEXT_H = 130 + 10 + labelSizeNext*1.15 + 34*scale + 30*scale;
+  const CONTENT_AREA_NEXT = 1080 - HEADER_NEXT_H - FOOTER_RESERVE - 20;
+  const SAFE_CONTENT_AREA = Math.min(CONTENT_AREA_FIRST, CONTENT_AREA_NEXT);
+  const CONTENT_AREA_LAST_EXTRA_FOOTER = 300;
+
+  let pages = paginateBlocks(blocks, SAFE_CONTENT_AREA);
+
+  const lastPageH = pages[pages.length-1].reduce((acc,b)=>acc+b.height,0);
+  const availableWithFooter = SAFE_CONTENT_AREA - (CONTENT_AREA_LAST_EXTRA_FOOTER - FOOTER_RESERVE);
+  if (lastPageH > availableWithFooter && pages[pages.length-1].length > 0) {
+    pages.push([]);
+  }
+  return pages;
+}
+
+function drawDayBanner(dia, mesAno, logoCompleto, logoIsotipo) {
+  const W = 1080;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = W;
+  const tctx = tempCanvas.getContext('2d');
+
+  // Probamos escalas decrecientes buscando que entre en máximo 2 páginas.
+  const SCALES_TO_TRY = [1, 0.9, 0.8, 0.72];
+  let pages = null;
+  let usedScale = 1;
+  for (const scale of SCALES_TO_TRY) {
+    const candidate = tryPaginateAtScale(tctx, dia, scale);
+    pages = candidate;
+    usedScale = scale;
+    if (candidate.length <= 2) break;
+  }
+  // Si ni con la escala más chica entra en 2, nos quedamos con esa igual (prioriza no perder info)
+
+  return pages.map((pageBlocks, idx) => {
+    const c = document.createElement('canvas');
+    drawSlide(c, pageBlocks, dia.diaSemana, dia.diaNumero, mesAno, logoCompleto, logoIsotipo, idx+1, pages.length, usedScale);
+    return c;
+  });
+}
+
+let logoCompleto = null;
+let logoIsotipo  = null;
+
+function preloadImgs() {
+  const load = src => new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+  return Promise.all([
+    load('Logo_Estudio_Giraud-02.png'),
+    load('Logo_Estudio_Giraud-04.png')
+  ]).then(([c, i]) => { logoCompleto = c; logoIsotipo = i; });
+}
+
+function crearCardMultiple(label, canvases, grid) {
+  const card = document.createElement('div');
+  card.className = 'banner-card';
+  const titulo = canvases.length > 1 ? `${label} (${canvases.length} slides)` : label;
+  card.innerHTML = `<h3>${titulo}</h3>`;
+
+  const slidesWrap = document.createElement('div');
+  slidesWrap.style.display = 'flex';
+  slidesWrap.style.gap = '0.6rem';
+  slidesWrap.style.overflowX = 'auto';
+  slidesWrap.style.paddingBottom = '0.5rem';
+
+  const safeLabel = label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_');
+
+  canvases.forEach((canvas, idx) => {
+    const slideBox = document.createElement('div');
+    slideBox.style.flex = '0 0 auto';
+    slideBox.style.width = canvases.length > 1 ? '140px' : '100%';
+    canvas.style.width = '100%';
+    canvas.style.borderRadius = '6px';
+    canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+    canvas.style.cursor = 'pointer';
+    canvas.title = 'Click para descargar este slide';
+    canvas.onclick = () => {
+      const a = document.createElement('a');
+      a.download = canvases.length > 1 ? `giraud_vencimientos_${safeLabel}_slide${idx+1}.png` : `giraud_vencimientos_${safeLabel}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    slideBox.appendChild(canvas);
+    slidesWrap.appendChild(slideBox);
+  });
+
+  card.appendChild(slidesWrap);
+
+  const btnRow = document.createElement('div');
+  btnRow.style.textAlign = 'right';
+  btnRow.style.marginTop = '0.75rem';
+  const btn = document.createElement('button');
+  btn.className = 'btn-dl';
+  btn.textContent = canvases.length > 1 ? `⬇ Descargar ${canvases.length} slides` : '⬇ Descargar';
+  btn.onclick = () => {
+    canvases.forEach((canvas, idx) => {
+      const a = document.createElement('a');
+      a.download = canvases.length > 1 ? `giraud_vencimientos_${safeLabel}_slide${idx+1}.png` : `giraud_vencimientos_${safeLabel}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+  };
+  btnRow.appendChild(btn);
+  card.appendChild(btnRow);
+  grid.appendChild(card);
+}
+
+async function generarTodos() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  const mailText = document.getElementById('mail-content').value.trim();
+
+  if (!apiKey) { setStatus('error','Ingresá tu API Key de Anthropic.'); return; }
+  if (!mailText) { setStatus('error','Pegá el contenido del mail.'); return; }
+
+  localStorage.setItem('giraud_api_key', apiKey);
+  document.getElementById('btn-generar').disabled = true;
+  document.getElementById('resultado').innerHTML = '';
+
+  try {
+    setStatus('loading','Cargando logos...');
+    await preloadImgs();
+
+    setStatus('loading','Analizando el boletín con Claude (puede tardar un momento)...');
+    const resultado = await procesarConClaude(apiKey, mailText);
+
+    if (!resultado.dias || resultado.dias.length === 0) {
+      setStatus('error','No se pudieron identificar vencimientos en el texto pegado.');
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'banners-grid';
+    document.getElementById('resultado').appendChild(grid);
+
+    // Detectar mes/año aproximado del primer vencimiento encontrado (texto libre, lo dejamos genérico)
+    const mesAno = new Date().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+
+    setStatus('loading', 'Generando portada...');
+    const primerDia = resultado.dias[0];
+    const ultimoDia = resultado.dias[resultado.dias.length-1];
+    const rango = `${primerDia.diaSemana} ${primerDia.diaNumero} al ${ultimoDia.diaSemana} ${ultimoDia.diaNumero}`;
+    const coverCanvas = drawCoverSlide(rango, logoCompleto, logoIsotipo);
+    crearCardMultiple('Portada', [coverCanvas], grid);
+
+    const todasLasSlides = []; // referencia: [{dia, canvases}]
+    for (let i = 0; i < resultado.dias.length; i++) {
+      const dia = resultado.dias[i];
+      setStatus('loading', `Generando banner ${i+1} de ${resultado.dias.length}: ${dia.diaSemana} ${dia.diaNumero}...`);
+      try {
+        const canvases = drawDayBanner(dia, mesAno, logoCompleto, logoIsotipo);
+        crearCardMultiple(`${dia.diaSemana} ${dia.diaNumero}`, canvases, grid);
+        todasLasSlides.push({ dia: `${dia.diaSemana} ${dia.diaNumero}`, count: canvases.length });
+      } catch(e) {
+        const card = document.createElement('div');
+        card.className = 'banner-card';
+        card.innerHTML = `<h3>${dia.diaSemana} ${dia.diaNumero}</h3><p style="color:#a33;font-size:0.8rem;padding:0.5rem">Error: ${e.message}</p>`;
+        grid.appendChild(card);
+      }
+    }
+
+    const totalSlides = 1 + todasLasSlides.reduce((acc,d)=>acc+d.count, 0); // +1 portada
+    if (totalSlides > 10) {
+      const detalle = todasLasSlides.map(d => `${d.dia}: ${d.count}`).join(' · ');
+      const warnDiv = document.createElement('div');
+      warnDiv.style.cssText = 'background:#fdf0f0;color:#a33;padding:0.9rem 1.1rem;border-radius:8px;margin-bottom:1.2rem;font-size:0.85rem;line-height:1.5';
+      warnDiv.innerHTML = `<strong>⚠ Atención:</strong> se generaron ${totalSlides} slides en total (portada + días), y Instagram permite máximo 10 por carrusel. Vas a tener que armar 2 publicaciones, o sacar manualmente algún día menos relevante.<br><span style="opacity:0.8">Detalle: ${detalle}</span>`;
+      document.getElementById('resultado').insertBefore(warnDiv, grid);
+    }
+
+    hideStatus();
+  } catch(e) {
+    setStatus('error', e.message);
+  } finally {
+    document.getElementById('btn-generar').disabled = false;
+  }
+}
+</script>
+</body>
+</html>
